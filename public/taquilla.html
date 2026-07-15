@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Taquilla | Habitaciones</title>
+    <link rel="stylesheet" href="panel.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
+  </head>
+  <body class="ticket-page">
+    <main class="ticket-main">
+      <header class="ticket-header">
+        <div>
+          <p class="eyebrow">Consulta de taquilla</p>
+          <h1>Habitaciones</h1>
+          <p>Disponibilidad, precio y capacidad en tiempo real.</p>
+        </div>
+        <div>
+          <button class="ticket-refresh" onclick="loadRooms()">
+            <i class="fa-solid fa-rotate"></i> Actualizar</button
+          ><button
+            class="logout-button"
+            onclick="
+              localStorage.clear();
+              location.href = '/';
+            "
+          >
+            Cerrar sesión
+          </button>
+        </div>
+      </header>
+      <section class="ticket-toolbar">
+        <label class="form-field"
+          ><span>Buscar habitación</span
+          ><input
+            type="search"
+            placeholder="Número o tipo..."
+            oninput="filterRooms(this.value)"
+        /></label>
+        <div class="ticket-legend">
+          <span><i class="available-dot"></i>Disponible</span
+          ><span><i class="occupied-dot"></i>Ocupada</span>
+        </div>
+      </section>
+      <section id="summary" class="ticket-summary"></section>
+      <section id="roomList" class="ticket-grid"></section>
+    </main>
+    <script>
+      const token = localStorage.getItem('token'),
+        user = JSON.parse(localStorage.getItem('usuario') || 'null');
+      if (!token || user?.rol !== 'Taquilla') location.href = '/';
+      let rooms = [];
+      const visibleState = (h) =>
+        h.estado?.nombre === 'Disponible'
+          ? 'Disponible'
+          : h.estado?.nombre === 'En proceso de reservación'
+            ? 'En proceso'
+            : 'Ocupada';
+      function render(list) {
+        const available = list.filter(
+          (h) => visibleState(h) === 'Disponible',
+        ).length;
+        const processing = list.filter(
+          (h) => visibleState(h) === 'En proceso',
+        ).length;
+        summary.innerHTML = `<article><strong>${list.length}</strong><span>Habitaciones</span></article><article class=available><strong>${available}</strong><span>Disponibles</span></article><article class=processing><strong>${processing}</strong><span>En proceso</span></article><article class=occupied><strong>${list.length - available - processing}</strong><span>Ocupadas</span></article>`;
+        roomList.innerHTML = list.length
+          ? list
+              .map((h) => {
+                const state = visibleState(h),
+                  stateClass = state.toLowerCase().replace(' ', '-'),
+                  price = Number(h.tipo?.precio || 0);
+                return `<article class="ticket-room ${stateClass}" data-search="${String(h.numero).toLowerCase()} ${(h.tipo?.nombre || '').toLowerCase()}"><div class=ticket-photo>${h.fotoUrl ? `<img src="${h.fotoUrl}" alt="Habitación ${h.numero}">` : '<i class="fa-solid fa-bed"></i>'}<span class="ticket-state ${stateClass}">${state}</span></div><div class=ticket-room-body><h2>Habitación ${h.numero}</h2><p>${h.tipo?.nombre || 'Sin tipo'}</p><div class=ticket-details><span><i class="fa-solid fa-user-group"></i><strong>${h.tipo?.capacidad || 0}</strong> personas</span><span><i class="fa-solid fa-tag"></i><strong>$${price.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</strong></span></div></div></article>`;
+              })
+              .join('')
+          : '<div class=queue-empty>No hay habitaciones para mostrar</div>';
+      }
+      async function loadRooms() {
+        roomList.innerHTML =
+          '<div class=loading-cleaning>Actualizando habitaciones...</div>';
+        const response = await fetch('/api/habitaciones', {
+          headers: { Authorization: 'Bearer ' + token },
+        });
+        if (response.status === 401 || response.status === 403) {
+          localStorage.clear();
+          location.href = '/';
+          return;
+        }
+        rooms = (await response.json()).filter((h) => h.activa);
+        render(rooms);
+      }
+      function filterRooms(value) {
+        const term = value.trim().toLowerCase();
+        render(
+          rooms.filter(
+            (h) =>
+              String(h.numero).toLowerCase().includes(term) ||
+              (h.tipo?.nombre || '').toLowerCase().includes(term),
+          ),
+        );
+      }
+      loadRooms();
+      setInterval(loadRooms, 30000);
+    </script>
+  </body>
+</html>

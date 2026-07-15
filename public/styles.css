@@ -1,0 +1,102 @@
+* {
+    box-sizing: border-box
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    /*background: linear-gradient(135deg, #e0f2fe, #f8fafc);*/
+    /* Cambia esto por la ruta de tu imagen */
+    background: url('hotel-dios-padre.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: #0f172a;
+
+}
+
+.login {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    grid-template-columns: 1.2fr 1fr;
+    align-items: center;
+    gap: 4rem;
+    padding: 8vw
+}
+
+.brand h1 {
+    font-size: 3rem;
+    color: #075985;
+    margin: 0 0 1rem
+}
+
+.brand p {
+    font-size: 1.25rem
+}
+
+.card {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px #0c4a6e22;
+    display: grid;
+    gap: 1rem;
+    width: 100%;             /* Se adapta a pantallas pequeñas */
+    max-width: 420px;
+
+}
+/* Estilos para la nueva imagen arriba de Iniciar Sesión */
+.card-logo {
+    max-width: 120px;        /* Ajusta este tamaño al gusto de tu logo */
+    margin: 0 auto 0.5rem;   /* Centra la imagen horizontalmente y le da espacio abajo */
+    display: block;
+    height: auto;
+}
+
+.card h2 {
+    margin: 0;
+    color: #0369a1;
+    text-align: center      /* centra también el texto de "Iniciar sesión" */
+}
+
+label {
+    display: grid;
+    gap: .4rem;
+    font-weight: 700
+}
+
+input,
+select,
+button {
+    padding: .9rem;
+    border-radius: 10px;
+    border: 1px solid #cbd5e1;
+    font-size: 1rem
+}
+
+button {
+    background: #0369a1;
+    color: #fff;
+    border: 0;
+    font-weight: 700;
+    cursor: pointer
+}
+
+#error {
+    color: #b91c1c;
+    min-height: 1.2rem
+}
+
+@media(max-width:760px) {
+    .login {
+        grid-template-columns: 1fr;
+        padding: 1.5rem;
+        gap: 1rem
+    }
+
+    .brand h1 {
+        font-size: 2rem
+    }
+}

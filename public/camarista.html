@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Trabajo de camarista</title>
+    <link rel="stylesheet" href="panel.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
+  </head>
+  <body class="housekeeper-page">
+    <main class="housekeeper-main">
+      <header class="housekeeper-header">
+        <div>
+          <p class="eyebrow">Limpieza del día</p>
+          <h1>Mis habitaciones</h1>
+          <p id="welcome"></p>
+        </div>
+        <div class="housekeeper-header-actions">
+          <span id="pendingCount" class="pending-count"></span
+          ><button
+            class="logout-button"
+            onclick="
+              localStorage.clear();
+              location.href = '/';
+            "
+          >
+            Cerrar sesión
+          </button>
+        </div>
+      </header>
+      <div class="housekeeper-help">
+        <i class="fa-solid fa-circle-info"></i
+        ><span
+          >Abre una habitación, inicia la limpieza y al terminar pulsa
+          <strong>Marcar como limpia</strong>. Desaparecerá de esta lista
+          automáticamente.</span
+        >
+      </div>
+      <section id="rooms" class="housekeeper-grid"></section>
+    </main>
+    <script>
+      const token = localStorage.getItem('token'),
+        user = JSON.parse(localStorage.getItem('usuario') || 'null');
+      if (!token || user?.rol !== 'Camarista') location.href = '/';
+      welcome.textContent =
+        'Hola, ' + user.nombre + '. Estas son tus tareas pendientes.';
+      async function api(url, opt = {}) {
+        const response = await fetch('/api' + url, {
+          ...opt,
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token,
+          },
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok)
+          throw Error(data.message || 'No fue posible realizar la acción');
+        return data;
+      }
+      function roomCard(h) {
+        const a = h.asignaciones[0];
+        const enProceso = a.estado === 'En proceso';
+        return `<article class="housekeeper-card ${enProceso ? 'working' : ''}"><div class=housekeeper-photo>${h.fotoUrl ? `<img src="${h.fotoUrl}" alt="Habitación ${h.numero}">` : '<i class="fa-solid fa-bed"></i>'}<span class=room-number>Habitación ${h.numero}</span></div><div class=housekeeper-body><div class=task-status><span class="status-dot"></span>${enProceso ? 'Limpieza en proceso' : 'Pendiente de limpieza'}</div><h2>${h.tipo?.nombre || 'Habitación'}</h2><p>Piso ${h.piso ?? '—'}</p><label class=form-field><span>Observación o incidencia</span><textarea id="note${a.id}" placeholder="Solo si necesitas reportar algo"></textarea></label><div class=housekeeper-actions>${enProceso ? '' : `<button class=start-cleaning onclick="updateTask(${a.id},'En proceso')"><i class="fa-solid fa-broom"></i> Iniciar limpieza</button>`}<button class=finish-cleaning onclick="finishTask(${a.id},${h.numero})"><i class="fa-solid fa-check"></i> Marcar como limpia</button></div></div></article>`;
+      }
+      async function load() {
+        rooms.innerHTML =
+          '<div class=loading-cleaning>Cargando habitaciones...</div>';
+        try {
+          const list = await api('/habitaciones/mis-asignadas');
+          pendingCount.textContent = `${list.length} pendiente${list.length === 1 ? '' : 's'}`;
+          rooms.innerHTML = list.length
+            ? list.map(roomCard).join('')
+            : '<div class=all-clean><i class="fa-solid fa-circle-check"></i><h2>¡Todo limpio!</h2><p>No tienes habitaciones pendientes por ahora.</p></div>';
+        } catch (error) {
+          rooms.innerHTML = `<div class=error>${error.message}</div>`;
+        }
+      }
+      async function updateTask(id, estado) {
+        await api('/limpieza/' + id + '/estado', {
+          method: 'PATCH',
+          body: JSON.stringify({
+            estado,
+            observacion: document.getElementById('note' + id).value,
+          }),
+        });
+        load();
+      }
+      async function finishTask(id, numero) {
+        if (!confirm(`¿La habitación ${numero} ya está completamente limpia?`))
+          return;
+        await updateTask(id, 'Limpia');
+        alert(
+          `Habitación ${numero} disponible. La tarea fue enviada al historial.`,
+        );
+      }
+      load();
+    </script>
+  </body>
+</html>

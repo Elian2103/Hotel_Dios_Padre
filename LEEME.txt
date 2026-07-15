@@ -1,0 +1,12 @@
+INTEGRACIÓN DE INTERFAZ Y ELIMINACIÓN DEL MÓDULO TARIFAS
+
+Copia:
+- public/admin.js
+- public/panel.css
+- src/app.module.ts
+- package.json y package-lock.json
+
+Este paquete elimina Tarifas del menú y deja de cargar TarifasModule.
+No borra la tabla tarifas para conservar compatibilidad e historiales.
+Instala primero los ZIP 01 y 02, después este ZIP 03.
+Finalmente ejecuta npm install, npm run build y npm run start:dev.
