@@ -13,7 +13,7 @@ body {
 /* permite cambiar el color al darbord o el menu de navegacion */
 aside {
   width: 245px;
-  background: linear-gradient(180deg, #0a19c3, #3138bd);
+  background: linear-gradient(135deg, #172554, #1d4ed8 55%, #06b6d4);
   color: #fff;
   padding: 24px;
   position: fixed;
@@ -275,7 +275,7 @@ td {
 }
 
 .reservation-hero {
-  background: linear-gradient(135deg, #0ea5e9, #0369a1);
+  background: linear-gradient(135deg, #172554, #1d4ed8 55%, #06b6d4);
   color: #fff;
   border-radius: 18px;
   padding: 24px;
@@ -570,7 +570,20 @@ legend {
   }
 }
 
-/* Acciones, dashboard y fotografías */
+.form-btn-container {
+    display: flex;
+    align-items: flex-end; /* Lo alinea perfectamente en la base de la fila */
+    width: 100%;
+}
+
+.action-btn {
+    width: 100%;       /* Hace que rellene todo el ancho de su columna */
+    height: 40px;      /* Ajusta este número (ej. 38px o 42px) para que iguale la altura exacta de tus inputs */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 button.create-button,
 .create-button {
   background: #16a34a !important;
@@ -581,6 +594,11 @@ button.primary {
   background: #16a34a !important;
   color: #fff !important;
 }
+button.danger {
+  background: #dc2626 !important;
+  color: #fff !important;
+}
+
 button[onclick^='editar'],
 button[onclick*='editar'] {
   background: #facc15 !important;
@@ -604,6 +622,7 @@ button.danger,
   background: #dc2626 !important;
   color: #fff !important;
 }
+
 button.danger:hover {
   background: #b91c1c !important;
 }
