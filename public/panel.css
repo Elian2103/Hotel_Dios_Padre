@@ -917,7 +917,7 @@ button {
   cursor: pointer;
 }
 .checkin-button {
-  background: #16a34a;
+  background: #7c3aed;
 }
 .checkout-button {
   background: #7c3aed;
@@ -1468,3 +1468,140 @@ button {
     flex-wrap: wrap;
   }
 }
+.btn-search {
+    background: linear-gradient(135deg, #172554, #1d4ed8 55%, #06b6d4);
+    color: white;
+    border: none;
+    border-radius: 6px; /* Para que mantenga las esquinas idénticas a los otros */
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 20px; /* Dale entre 15px y 20px de espacio para que se separe bien del campo de arriba */
+}
+
+.btn-search:hover {
+    background: linear-gradient(135deg, #172554, #1d4ed8 55%, #06b6d4);
+}
+/* 2. Forzar el color azul sobre la clase .primary */
+.cleaning-assignment button.primary.btn-assign-cleaning {
+   background: linear-gradient(135deg, #172554, #1d4ed8 55%, #06b6d4)!important;
+    color: white !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important; /* Para que el rodillo y el texto no se junten */
+    width: 100% !important;        /* Hace que se estire a lo ancho de su columna */
+    padding: 10px 16px !important; /* Le da el grosor interno vertical idéntico a los inputs */
+    height: 42px !important;       /* Fuerza la misma altura exacta que los campos select/date */
+}
+
+/* 1. Alinear todos los elementos de la barra en una sola fila armoniosa */
+.report-filters {
+    display: flex !important;
+    align-items: flex-end !important; /* Mantiene todo alineado por abajo */
+    gap: 16px !important;
+    flex-wrap: wrap !important;
+}
+
+/* 2. Convertir los botones de tiempo (Hoy, Semana...) en un grupo moderno */
+.quick-periods {
+    display: inline-flex !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+.quick-periods button {
+    background-color: #f8fafc !important;
+    border: none !important;
+    border-right: 1px solid #cbd5e1 !important;
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #475569 !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+    transition: all 0.2s ease !important;
+}
+
+.quick-periods button:last-child {
+    border-right: none !important;
+}
+
+.quick-periods button:hover {
+    background-color: #f1f5f9 !important;
+}
+/* Cuando el usuario hace clic en un botón del grupo, este cambia a tu azul corporativo */
+.quick-periods button:focus {
+    background-color: #0284c7 !important;
+    color: white !important;
+    outline: none !important;
+}
+
+/* Si tu JS le añade la clase 'active' al botón seleccionado, este estilo lo destacará */
+.quick-periods button.active {
+    background-color: #0284c7 !important;
+    color: white !important;
+}
+
+/* 3. Estilizar los contenedores label de las fechas */
+.report-filters label {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #475569 !important;
+}
+
+.report-filters input[type="date"] {
+    height: 42px !important; /* Misma altura que tendrán los botones */
+    padding: 0 10px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px !important;
+    font-family: inherit !important;
+}
+
+/* 4. Cambiar 'Aplicar filtros' a Azul Corporativo con tamaño correcto */
+.report-filters button.primary {
+    background: linear-gradient(135deg, #172554, #1d4ed8 55%, #06b6d4)!important;
+    color: white !important;
+    height: 42px !important;
+    padding: 0 16px !important;
+    border: none !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    transition: background-color 0.2s ease !important;
+}
+
+.report-filters button.primary:hover {
+    background-color: #0369a1 !important;
+}
+
+/* 5. Estandarizar el botón de Descargar PDF (Verde) al mismo tamaño */
+.report-filters #btnDescargarReporte.create-button {
+    background-color: #16a34a !important;
+    color: white !important;
+    height: 42px !important;
+    padding: 0 16px !important;
+    border: none !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    transition: background-color 0.2s ease !important;
+}
+
+.report-filters #btnDescargarReporte.create-button:hover {
+    background-color: #16a34a !important;
+}
+
+
