@@ -24,6 +24,13 @@ import { ReportesModule } from './reportes/reportes.module';
         username: c.get('DB_USERNAME', 'root'),
         password: c.get('DB_PASSWORD', ''),
         database: c.get('DB_NAME', 'hotel_dios_padre'),
+        ssl:
+          c.get('DB_SSL', 'false') === 'true'
+            ? {
+                rejectUnauthorized:
+                  c.get('DB_SSL_REJECT_UNAUTHORIZED', 'true') !== 'false',
+              }
+            : undefined,
         autoLoadEntities: true,
         synchronize: false,
       }),

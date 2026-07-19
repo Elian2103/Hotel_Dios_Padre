@@ -1,10 +1,10 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
   Param,
-  ParseFilePipeBuilder,
   ParseIntPipe,
   Patch,
   Post,
@@ -13,16 +13,27 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { mkdirSync } from 'fs';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, join } from 'path';
 import { HabitacionesService } from './habitaciones.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UsuarioActual } from '../common/decorators/usuario-actual.decorator';
 
+const directorioFotos = join(
+  __dirname,
+  '..',
+  '..',
+  'public',
+  'uploads',
+  'habitaciones',
+);
+mkdirSync(directorioFotos, { recursive: true });
+
 const almacenamientoFotos = diskStorage({
-  destination: './public/uploads/habitaciones',
+  destination: directorioFotos,
   filename: (_request, file, callback) => {
     const nombre = `habitacion-${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     callback(null, `${nombre}${extname(file.originalname).toLowerCase()}`);
@@ -78,14 +89,13 @@ export class HabitacionesController {
   )
   subirFoto(
     @Param('id', ParseIntPipe) id: number,
-    @UploadedFile(
-      new ParseFilePipeBuilder()
-        .addFileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/ })
-        .addMaxSizeValidator({ maxSize: 5 * 1024 * 1024 })
-        .build(),
-    )
-    file: Express.Multer.File,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
+    if (!file) {
+      throw new BadRequestException(
+        'Selecciona una imagen JPG, PNG o WEBP de máximo 5 MB',
+      );
+    }
     return this.service.guardarFoto(
       id,
       `/uploads/habitaciones/${file.filename}`,

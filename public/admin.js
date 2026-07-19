@@ -5,13 +5,28 @@ const api = async (url, opt = {}) => {
   const isForm = opt.body instanceof FormData;
   const headers = { Authorization: 'Bearer ' + token, ...opt.headers };
   if (!isForm) headers['Content-Type'] = 'application/json';
-  const r = await fetch('/api' + url, { ...opt, headers });
-  const d = await r.json().catch(() => ({}));
-  if (!r.ok)
-    throw Error(
-      Array.isArray(d.message) ? d.message.join(', ') : d.message || 'Error',
-    );
-  return d;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    const r = await fetch('/api' + url, {
+      ...opt,
+      headers,
+      signal: opt.signal || controller.signal,
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok)
+      throw Error(
+        Array.isArray(d.message) ? d.message.join(', ') : d.message || 'Error',
+      );
+    return d;
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw Error('El servidor tardó demasiado en responder. Intenta de nuevo.');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 };
 const modules = [
   ['Panel Principal', 'dashboard', '<i class="fa-solid fa-house"></i>'],
@@ -64,31 +79,57 @@ async function load(id, label) {
   title.textContent = label;
   content.innerHTML = '<div class="box">Cargando...</div>';
   try {
-    if (id === 'dashboard') return dash();
-    if (id === 'habitaciones') return habitaciones();
-    if (id === 'reservaciones') return reservaciones();
-    if (id === 'recepcion') return recepcion();
-    if (id === 'limpieza') return limpieza();
-    if (id === 'reportes') return reportes();
-    return crud(id);
+    if (id === 'dashboard') return await dash();
+    if (id === 'habitaciones') return await habitaciones();
+    if (id === 'reservaciones') return await reservaciones();
+    if (id === 'recepcion') return await recepcion();
+    if (id === 'limpieza') return await limpieza();
+    if (id === 'usuarios') return await usuarios();
+    if (id === 'reportes') return await reportes();
+    return await crud(id);
   } catch (e) {
-    content.innerHTML = `<p class=error>${esc(e.message)}</p>`;
+    content.innerHTML = `<div class="box error"><strong>No se pudo cargar el módulo.</strong><p>${esc(e.message)}</p><button class=primary onclick="load('${esc(id)}','${esc(label)}')">Reintentar</button></div>`;
   }
 }
 async function dash() {
   const d = await api('/reportes/dashboard');
   content.innerHTML = `<div class=cards><div class=card>Ocupación<strong>${d.porcentajeOcupacion}%</strong></div><div class=card>Reservaciones confirmadas<strong>${d.reservacionesConfirmadas}</strong></div>${d.estados.map((x) => `<div class=card>${esc(x.nombre)}<strong>${x.total}</strong></div>`).join('')}</div>`;
 }
-function habitacionCard(h, tipos) {
-  return `<article class="room-card ${h.activa ? '' : 'inactive'}"><div class="room-photo">${h.fotoUrl ? `<img src="${esc(h.fotoUrl)}" alt="Habitación ${esc(h.numero)}">` : '<span>Sin fotografía</span>'}</div><div class="room-body"><div class="room-title"><h3>Habitación ${esc(h.numero)}</h3><span class="badge">${esc(h.estado?.nombre || 'Sin estado')}</span></div><p>Piso: ${esc(h.piso ?? '-')} · ${esc(h.tipo?.nombre || 'Sin tipo')}</p><p>${esc(h.observaciones || 'Sin observaciones')}</p><div class="actions"><button class="primary" onclick='editarHabitacion(${JSON.stringify(h).replace(/'/g, '&#39;')})'>Editar</button><label class="file-button">Foto<input type="file" accept="image/png,image/jpeg,image/webp" onchange="subirFoto(${h.id},this)"></label>${h.fotoUrl ? `<button onclick="eliminarFoto(${h.id})">Quitar foto</button>` : ''}<button class="danger" onclick="eliminarHabitacion(${h.id})">Eliminar</button></div></div></article>`;
+function urlFotoHabitacion(fotoUrl) {
+  if (!fotoUrl) return '';
+  let ruta = String(fotoUrl).trim().replaceAll('\\', '/');
+  ruta = ruta.replace(/^.*\/public\//i, '/').replace(/^public\//i, '/');
+  if (!/^https?:\/\//i.test(ruta) && !ruta.startsWith('/')) ruta = `/${ruta}`;
+  return `${ruta}${ruta.includes('?') ? '&' : '?'}v=${Date.now()}`;
+}
+function habitacionCard(h) {
+  const foto = urlFotoHabitacion(h.fotoUrl);
+  return `<article class="room-card ${h.activa ? '' : 'inactive'}"><div class="room-photo">${foto ? `<img src="${esc(foto)}" alt="Habitación ${esc(h.numero)}" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class=room-photo-error hidden><i class="fa-regular fa-image"></i> No se pudo cargar la imagen</span>` : '<span class=room-photo-empty><i class="fa-regular fa-image"></i> Sin fotografía</span>'}</div><div class="room-body"><div class="room-title"><h3>Habitación ${esc(h.numero)}</h3><span class="badge">${esc(h.estado?.nombre || 'Sin estado')}</span></div><p><i class="fa-solid fa-layer-group"></i> Piso ${esc(h.piso ?? '-')} · ${esc(h.tipo?.nombre || 'Sin tipo')}</p><p>${esc(h.observaciones || 'Sin observaciones')}</p><div class="room-actions"><button class=room-edit-button onclick='editarHabitacion(${JSON.stringify(h).replace(/'/g, '&#39;')})'><i class="fa-regular fa-pen-to-square"></i> Editar</button><label class="file-button"><i class="fa-solid fa-camera"></i> ${foto ? 'Cambiar foto' : 'Subir foto'}<input type="file" accept="image/png,image/jpeg,image/webp" onchange="subirFoto(${h.id},this)"></label>${foto ? `<button class=room-remove-photo onclick="eliminarFoto(${h.id})"><i class="fa-regular fa-image"></i> Quitar</button>` : ''}<button class="danger room-delete-button" onclick="eliminarHabitacion(${h.id})" title="Eliminar habitación"><i class="fa-regular fa-trash-can"></i></button></div></div></article>`;
 }
 async function habitaciones() {
   const [rows, tipos] = await Promise.all([
     api('/habitaciones'),
     api('/tipos-habitacion'),
   ]);
+  const estados = [
+    { id: 1, nombre: 'Disponible' },
+    { id: 2, nombre: 'En proceso de reservación' },
+    { id: 3, nombre: 'Reservada' },
+    { id: 4, nombre: 'Ocupada' },
+    { id: 5, nombre: 'Pendiente de limpieza' },
+    { id: 6, nombre: 'Sucia' },
+    { id: 7, nombre: 'En proceso' },
+    { id: 8, nombre: 'Limpia' },
+    { id: 9, nombre: 'Fuera de servicio' },
+  ];
   window.tiposHabitacion = tipos;
+<<<<<<< HEAD
   content.innerHTML = `<div class="box"><h3 id="habitacionFormTitulo">Nueva habitación</h3><form id="habitacionForm"><input type=hidden name=id><input name=numero placeholder="Número" required><input name=piso type=number placeholder="Piso"><select name=tipoId>${tipos.map((t) => `<option value=${t.id}>${esc(t.nombre)}</option>`)}</select><input name=estadoId type=number value=1 placeholder="ID estado"><textarea name=observaciones placeholder="Observaciones"></textarea><button class=primary>Guardar habitación</button><button class="primary danger" type=button onclick="limpiarHabitacionForm()">Cancelar edición</button></form></div><div class="room-grid">${rows.map((h) => habitacionCard(h, tipos)).join('')}</div>`;
+=======
+  window.estadosHabitacion = estados;
+  const estadoInicial = estados.find((e) => e.nombre === 'Disponible')?.id ?? estados[0]?.id ?? '';
+  content.innerHTML = `<section class=rooms-header><div><h2>Habitaciones</h2><p>Administra los datos, estados y fotografías de cada habitación.</p></div></section><div class="box room-form-box"><h3 id="habitacionFormTitulo">Nueva habitación</h3><form id="habitacionForm" class=room-form><input type=hidden name=id><label><span>Número *</span><input name=numero placeholder="Ej. 101" required></label><label><span>Piso</span><input name=piso type=number placeholder="Ej. 1"></label><label><span>Tipo de habitación *</span><select name=tipoId required><option value="">Selecciona un tipo</option>${tipos.map((t) => `<option value=${t.id}>${esc(t.nombre)}</option>`).join('')}</select></label><label><span>Estado *</span><select name=estadoId required><option value="">Selecciona un estado</option>${estados.map((e) => `<option value=${e.id} ${Number(e.id) === Number(estadoInicial) ? 'selected' : ''}>${esc(e.nombre)}</option>`).join('')}</select></label><label class=wide><span>Observaciones</span><textarea name=observaciones placeholder="Detalles o notas de la habitación"></textarea></label><div class="room-form-actions"><button class=primary><i class="fa-solid fa-floppy-disk"></i> Guardar habitación</button><button type=button onclick="limpiarHabitacionForm()">Cancelar edición</button></div></form></div><div class="room-grid">${rows.map(habitacionCard).join('')}</div>`;
+>>>>>>> 8a46921 (second commit)
   habitacionForm.onsubmit = guardarHabitacion;
 }
 async function guardarHabitacion(e) {
@@ -118,10 +159,19 @@ function limpiarHabitacionForm() {
 }
 async function subirFoto(id, input) {
   if (!input.files[0]) return;
+  const etiqueta = input.closest('.file-button');
+  const textoOriginal = etiqueta.innerHTML;
+  etiqueta.classList.add('uploading');
   const fd = new FormData();
   fd.append('foto', input.files[0]);
-  await api(`/habitaciones/${id}/foto`, { method: 'POST', body: fd });
-  habitaciones();
+  try {
+    await api(`/habitaciones/${id}/foto`, { method: 'POST', body: fd });
+    await habitaciones();
+  } catch (error) {
+    etiqueta.classList.remove('uploading');
+    etiqueta.innerHTML = textoOriginal;
+    alert(error.message);
+  }
 }
 async function eliminarFoto(id) {
   if (!confirm('¿Quitar la fotografía?')) return;
@@ -138,6 +188,7 @@ async function eliminarHabitacion(id) {
   await api(`/habitaciones/${id}`, { method: 'DELETE' });
   habitaciones();
 }
+
 async function crud(id) {
   const rows = await api('/' + id);
   let fields =
@@ -291,17 +342,6 @@ async function limpieza() {
   const cams = us.filter((x) => x.rol?.nombre === 'Camarista');
   content.innerHTML = `<div class=box><form id=f><select name=habitacionId>${hs.filter((x) => x.activa).map((x) => `<option value=${x.id}>${esc(x.numero)}</option>`)}</select><select name=camaristaId>${cams.map((x) => `<option value=${x.id}>${esc(x.nombre)}</option>`)}</select><input name=fecha type=date value=${new Date().toISOString().slice(0, 10)}><button class=primary>Asignar</button></form></div><h3>Asignaciones</h3>${table(rows)}<h3>Observaciones</h3>${table(obs)}`;
   f.onsubmit = (e) => sendForm(e, '/limpieza/asignar', limpieza);
-}
-async function reportes() {
-  const [o, t] = await Promise.all([
-    api('/reportes/ocupacion'),
-    api('/reportes/habitaciones-utilizadas'),
-  ]);
-  content.innerHTML =
-    '<h3>Ocupación</h3>' +
-    table(o) +
-    '<h3>Habitaciones más utilizadas</h3>' +
-    table(t);
 }
 // CRUD completo para los catálogos visibles en el panel.
 const camposCrud = {
@@ -658,7 +698,7 @@ async function recepcion() {
       !checkouts.has(Number(r.id)) &&
       r.estado !== 'Finalizada',
   );
-  content.innerHTML = `<section class=reception-command><div><p class=eyebrow>Recepción rápida</p><h2>¿Qué necesitas hacer?</h2><p>Elige una acción. Los clientes pendientes aparecen primero.</p></div><div class=live-summary><span><strong>${llegadas.length}</strong> llegadas</span><span><strong>${salidas.length}</strong> salidas</span></div></section><nav class=reception-tabs><button class="reception-tab active" data-tab=llegadas onclick="mostrarRecepcionTab('llegadas')"><i class="fa-solid fa-person-walking-arrow-right"></i><strong>Llegadas</strong><span>${llegadas.length} pendientes</span></button><button class=reception-tab data-tab=salidas onclick="mostrarRecepcionTab('salidas')"><i class="fa-solid fa-person-walking-arrow-loop-left"></i><strong>Salidas</strong><span>${salidas.length} pendientes</span></button><button class=reception-tab data-tab=nueva onclick="mostrarRecepcionTab('nueva')"><i class="fa-solid fa-user-plus"></i><strong>Nueva reservación</strong><span>Cliente sin registro</span></button></nav><div class="reception-search">${campo('Buscar cliente, folio o habitación', '<input type=search placeholder="Escribe para filtrar..." oninput="filtrarRecepcion(this.value)">', 'wide')}</div><section id=panel-llegadas class=reception-panel data-panel=llegadas><div class=panel-heading><div><h2>Clientes por llegar</h2><p>Un toque registra el check-in y marca la habitación como ocupada.</p></div></div><div class=queue-list>${llegadas.length ? llegadas.map((r) => recepcionCard(r, 'checkin')).join('') : '<div class=queue-empty>✓ No hay llegadas pendientes</div>'}</div></section><section id=panel-salidas class=reception-panel data-panel=salidas hidden><div class=panel-heading><div><h2>Clientes hospedados</h2><p>Registra la salida y envía la habitación a limpieza.</p></div></div><div class=queue-list>${salidas.length ? salidas.map((r) => recepcionCard(r, 'checkout')).join('') : '<div class=queue-empty>✓ No hay salidas pendientes</div>'}</div></section><section id=panel-nueva class=reception-panel data-panel=nueva hidden>${formularioReservaHtml('Nueva reservación desde recepción')}</section><details class=reception-history><summary>Ver historial de movimientos (${historial.length})</summary>${table(historial)}</details>`;
+  content.innerHTML = `<section class=reception-command><div><p class=eyebrow>Recepción rápida</p><h2>¿Qué necesitas hacer?</h2><p>Primero crea la reservación; después podrás registrar check-in y check-out.</p></div><div class=live-summary><span><strong>${llegadas.length}</strong> check-in</span><span><strong>${salidas.length}</strong> check-out</span></div></section><nav class=reception-tabs><button class="reception-tab active" data-tab=nueva onclick="mostrarRecepcionTab('nueva')"><i class="fa-solid fa-user-plus"></i><strong>Nueva reservación</strong><span>Crear registro</span></button><button class=reception-tab data-tab=llegadas onclick="mostrarRecepcionTab('llegadas')"><i class="fa-solid fa-person-walking-arrow-right"></i><strong>Check-in</strong><span>${llegadas.length} pendientes</span></button><button class=reception-tab data-tab=salidas onclick="mostrarRecepcionTab('salidas')"><i class="fa-solid fa-person-walking-arrow-loop-left"></i><strong>Check-out</strong><span>${salidas.length} pendientes</span></button></nav><section id=panel-nueva class=reception-panel data-panel=nueva>${formularioReservaHtml('Nueva reservación desde recepción')}</section><div class="reception-search">${campo('Buscar cliente, folio o habitación', '<input type=search placeholder="Escribe para filtrar..." oninput="filtrarRecepcion(this.value)">', 'wide')}</div><section id=panel-llegadas class=reception-panel data-panel=llegadas hidden><div class=panel-heading><div><h2>Clientes por llegar</h2><p>Un toque registra el check-in y marca la habitación como ocupada.</p></div></div><div class=queue-list>${llegadas.length ? llegadas.map((r) => recepcionCard(r, 'checkin')).join('') : '<div class=queue-empty>✓ No hay llegadas pendientes</div>'}</div></section><section id=panel-salidas class=reception-panel data-panel=salidas hidden><div class=panel-heading><div><h2>Clientes hospedados</h2><p>Registra el check-out y envía la habitación a limpieza.</p></div></div><div class=queue-list>${salidas.length ? salidas.map((r) => recepcionCard(r, 'checkout')).join('') : '<div class=queue-empty>✓ No hay salidas pendientes</div>'}</div></section><details class=reception-history><summary>Ver historial de movimientos (${historial.length})</summary>${table(historial)}</details>`;
 }
 
 async function editarReserva(r) {
@@ -766,4 +806,145 @@ async function limpiarReservaActual() {
   await liberarBloqueosReserva();
   origenReserva === 'recepcion' ? recepcion() : reservaciones();
 }
+function fechaLocal(fecha = new Date()) {
+  const local = new Date(fecha.getTime() - fecha.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+}
+
+function activarValidacionFechas(contenedor = document) {
+  const hoy = fechaLocal();
+  contenedor.querySelectorAll('input[type="date"]:not([data-allow-past])').forEach((input) => {
+    input.min = hoy;
+    input.addEventListener('change', () => {
+      if (input.value && input.value < hoy) {
+        input.setCustomValidity('La fecha no puede ser anterior al día de hoy.');
+        input.reportValidity();
+      } else input.setCustomValidity('');
+    });
+  });
+  const inicio = contenedor.querySelector('[name="fechaInicio"]');
+  const fin = contenedor.querySelector('[name="fechaFin"]');
+  if (inicio && fin) {
+    const sincronizar = () => {
+      fin.min = inicio.value || hoy;
+      if (fin.value && inicio.value && fin.value <= inicio.value) {
+        fin.setCustomValidity('La salida debe ser posterior a la entrada.');
+      } else fin.setCustomValidity('');
+    };
+    inicio.addEventListener('change', sincronizar);
+    fin.addEventListener('change', sincronizar);
+    sincronizar();
+  }
+}
+
+const observarFormularios = new MutationObserver(() => activarValidacionFechas(content));
+observarFormularios.observe(content, { childList: true, subtree: true });
+
+function datosJs(valor) {
+  return encodeURIComponent(JSON.stringify(valor)).replace(/'/g, '%27');
+}
+
+async function usuarios() {
+  const [rows, roles] = await Promise.all([api('/usuarios'), api('/usuarios/roles')]);
+  window.usuariosData = rows;
+  window.rolesData = roles;
+  content.innerHTML = `<section class=usuarios-header><div><h2>Usuarios</h2><p>Gestión de accesos y perfiles del sistema.</p></div><button class="primary create-button" onclick="mostrarFormularioUsuario()"><i class="fa-solid fa-user-plus"></i> Nuevo usuario</button></section><section class="box usuarios-panel"><div class=usuarios-toolbar><input id=buscarUsuario type=search placeholder="Buscar por nombre, correo o usuario..." oninput="filtrarUsuarios()"><select id=filtroRol onchange="filtrarUsuarios()"><option value="">Todos los roles</option>${roles.map((r) => `<option value="${esc(r.nombre)}">${esc(r.nombre)}</option>`).join('')}</select><select id=filtroEstado onchange="filtrarUsuarios()"><option value="">Todos los estados</option><option value=activo>Activos</option><option value=inactivo>Inactivos</option></select></div><div id=tablaUsuarios>${crearTablaUsuarios(rows)}</div></section><div id=modalUsuario class=modal-usuario><div class=modal-usuario-contenido><header><div><h3 id=modalUsuarioTitulo>Nuevo usuario</h3><p>Completa los datos del perfil.</p></div><button type=button onclick="cerrarFormularioUsuario()">×</button></header><form id=usuarioForm class=usuario-form><input type=hidden name=id>${campoUsuario('Nombre *','nombre','text','required minlength=2 maxlength=100')}${campoUsuario('Apellido paterno','apellidoPaterno')}${campoUsuario('Apellido materno','apellidoMaterno')}${campoUsuario('Teléfono','telefono','tel','inputmode=numeric minlength=10 maxlength=10 pattern="[0-9]{10}"')}${campoUsuario('Correo','correo','email','maxlength=150')}${campoUsuario('Nombre de usuario *','usuario','text','required minlength=4 maxlength=50 pattern="[A-Za-z0-9._-]+"')}${campoUsuario('Contraseña','password','password','minlength=8 maxlength=100')}<label class=campo-usuario><span>Rol *</span><select name=rolId required><option value="">Selecciona un rol</option>${roles.map((r) => `<option value=${r.id}>${esc(r.nombre)}</option>`).join('')}</select></label><div class=modal-usuario-acciones><button type=button onclick="cerrarFormularioUsuario()">Cancelar</button><button id=btnGuardarUsuario class=primary>Guardar usuario</button></div></form></div></div>`;
+  usuarioForm.onsubmit = guardarUsuario;
+  usuarioForm.telefono.addEventListener('input', (e) => (e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10)));
+}
+function campoUsuario(etiqueta, nombre, tipo = 'text', atributos = '') {
+  return `<label class=campo-usuario><span>${etiqueta}</span><input name=${nombre} type=${tipo} ${atributos}></label>`;
+}
+function crearTablaUsuarios(rows) {
+  if (!rows.length) return '<div class=usuarios-vacio>No se encontraron usuarios.</div>';
+  return `<div class=table-wrap><table class=usuarios-table><thead><tr><th>Usuario</th><th>Contacto</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${rows.map((u) => `<tr><td><div class=usuario-info><span class=usuario-avatar>${esc((u.nombre || 'U')[0].toUpperCase())}</span><div><strong>${esc([u.nombre,u.apellidoPaterno,u.apellidoMaterno].filter(Boolean).join(' '))}</strong><small>@${esc(u.usuario)}</small></div></div></td><td>${esc(u.correo || 'Sin correo')}<small>${esc(u.telefono || 'Sin teléfono')}</small></td><td><span class=rol-badge>${esc(u.rol?.nombre || 'Sin rol')}</span></td><td><span class="estado-usuario ${u.activo ? 'activo' : 'inactivo'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td><td><div class=usuario-acciones><button class=usuario-edit-button title="Editar usuario" aria-label="Editar usuario" onclick="editarUsuario(decodeURIComponent('${datosJs(u)}'))"><i class="fa-solid fa-pen"></i></button><button class="usuario-status-button ${u.activo ? 'is-active' : 'is-inactive'}" title="${u.activo ? 'Desactivar usuario' : 'Activar usuario'}" aria-label="${u.activo ? 'Desactivar usuario' : 'Activar usuario'}" onclick="cambiarEstadoUsuario(${u.id})"><i class="fa-solid fa-power-off"></i></button><button class=usuario-delete-button title="Desactivar usuario" aria-label="Desactivar usuario" onclick="eliminarUsuario(${u.id})"><i class="fa-solid fa-trash-can"></i></button></div></td></tr>`).join('')}</tbody></table></div>`;
+}
+function filtrarUsuarios() {
+  const texto = buscarUsuario.value.toLowerCase().trim();
+  const filtrados = window.usuariosData.filter((u) => `${u.nombre || ''} ${u.apellidoPaterno || ''} ${u.correo || ''} ${u.usuario || ''}`.toLowerCase().includes(texto) && (!filtroRol.value || u.rol?.nombre === filtroRol.value) && (!filtroEstado.value || (filtroEstado.value === 'activo') === Boolean(u.activo)));
+  tablaUsuarios.innerHTML = crearTablaUsuarios(filtrados);
+}
+function mostrarFormularioUsuario() { usuarioForm.reset(); usuarioForm.id.value=''; usuarioForm.password.required=true; modalUsuarioTitulo.textContent='Nuevo usuario'; modalUsuario.classList.add('activo'); }
+function cerrarFormularioUsuario() { modalUsuario?.classList.remove('activo'); }
+function editarUsuario(data) { const u=JSON.parse(data), f=usuarioForm; mostrarFormularioUsuario(); f.id.value=u.id; ['nombre','apellidoPaterno','apellidoMaterno','telefono','correo','usuario'].forEach((k)=>f[k].value=u[k] ?? ''); f.rolId.value=u.rolId ?? u.rol?.id ?? ''; f.password.required=false; modalUsuarioTitulo.textContent='Editar usuario'; }
+async function guardarUsuario(e) { e.preventDefault(); if (!e.target.reportValidity()) return; const d=Object.fromEntries(new FormData(e.target)); const id=d.id; delete d.id; Object.keys(d).forEach((k)=>{ if(typeof d[k]==='string') d[k]=d[k].trim(); }); if(!d.password) delete d.password; await api(id ? `/usuarios/${id}` : '/usuarios',{method:id?'PATCH':'POST',body:JSON.stringify(d)}); cerrarFormularioUsuario(); usuarios(); }
+async function cambiarEstadoUsuario(id) { await api(`/usuarios/${id}/estado`,{method:'PATCH'}); usuarios(); }
+async function eliminarUsuario(id) { if(confirm('¿Desactivar este usuario?')) { await api(`/usuarios/${id}`,{method:'DELETE'}); usuarios(); } }
+
+function rangoReporte(tipo) {
+  const fin = new Date(), inicio = new Date(fin);
+  if (tipo === 'dia') inicio.setDate(fin.getDate());
+  if (tipo === 'semana') inicio.setDate(fin.getDate() - 6);
+  if (tipo === 'mes') inicio.setMonth(fin.getMonth(), 1);
+  if (tipo === 'anio') inicio.setMonth(0, 1);
+  reporteInicio.value = fechaLocal(inicio); reporteFin.value = fechaLocal(fin);
+  generarReporte();
+}
+async function reportes() {
+  const fin=fechaLocal(), inicio=fechaLocal(new Date(Date.now()-29*86400000));
+  content.innerHTML=`<section class=report-hero><div><p class=eyebrow>Información para decisiones</p><h2>Reportes del hotel</h2><p>Filtra el periodo, revisa los resultados y descarga un PDF organizado.</p></div><img src="hotel-ixmiquilpan.png" alt="Hotel Dios Padre"></section><section class="box report-filters"><div class=quick-periods><button onclick="rangoReporte('dia')">Hoy</button><button onclick="rangoReporte('semana')">Semana</button><button onclick="rangoReporte('mes')">Mes</button><button onclick="rangoReporte('anio')">Año</button></div><label>Desde<input id=reporteInicio type=date data-allow-past value=${inicio}></label><label>Hasta<input id=reporteFin type=date data-allow-past value=${fin}></label><button class=primary onclick=generarReporte()>Aplicar filtros</button><button id=btnDescargarReporte class=create-button onclick=descargarReportePdf()><i class="fa-solid fa-file-pdf"></i> Descargar PDF</button></section><div id=resultadosReporte><div class="box empty">Cargando reporte...</div></div>`;
+  await generarReporte();
+}
+function normalizarFilasReporte(valor) {
+  if (Array.isArray(valor)) return valor;
+  if (Array.isArray(valor?.data)) return valor.data;
+  if (Array.isArray(valor?.rows)) return valor.rows;
+  if (valor && typeof valor === 'object' && ('tipo' in valor || 'fecha' in valor)) {
+    return [valor];
+  }
+  const elementos = valor && typeof valor === 'object' ? Object.values(valor) : [];
+  return elementos.length && elementos.every((item) => item && typeof item === 'object' && !Array.isArray(item))
+    ? elementos
+    : [];
+}
+let reporteActual={ocupacion:[],tiposHabitacion:[],ingresosPorDia:[],inicio:'',fin:''};
+async function generarReporte() {
+  const inicio=reporteInicio.value, fin=reporteFin.value;
+  if(!inicio || !fin || inicio>fin) return alert('Selecciona un rango de fechas válido.');
+  const q=`?inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}`;
+  const contenedor=document.getElementById('resultadosReporte');
+  contenedor.innerHTML='<div class="box empty">Cargando reporte...</div>';
+  try {
+    const [ocupacionRespuesta,tiposHabitacionRespuesta,ingresosPorDiaRespuesta]=await Promise.all([api('/reportes/ocupacion'+q),api('/reportes/tipos-habitacion'+q),api('/reportes/ingresos-por-dia'+q)]);
+    const ocupacion=normalizarFilasReporte(ocupacionRespuesta), tiposHabitacion=normalizarFilasReporte(tiposHabitacionRespuesta), ingresosPorDia=normalizarFilasReporte(ingresosPorDiaRespuesta);
+    reporteActual={ocupacion,tiposHabitacion,ingresosPorDia,inicio,fin};
+    const total=ocupacion.reduce((s,r)=>s+Number(r.reservaciones||0),0), huespedes=ocupacion.reduce((s,r)=>s+Number(r.huespedes||0),0), usos=tiposHabitacion.reduce((s,r)=>s+Number(r.usos||0),0), ganancias=tiposHabitacion.reduce((s,r)=>s+Number(r.ganancias||0),0);
+    const tiposFormateados=tiposHabitacion.map((r)=>({...r,ganancias:new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(Number(r.ganancias||0))}));
+    const diasFormateados=ingresosPorDia.map((r)=>({...r,dia:String(r.dia).slice(0,10),ganancias:new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(Number(r.ganancias||0))}));
+    contenedor.innerHTML=`<div class=report-summary><article><span>Reservaciones</span><strong>${total}</strong></article><article><span>Huéspedes</span><strong>${huespedes}</strong></article><article><span>Usos por tipo de habitación</span><strong>${usos}</strong></article><article><span>Ganancias totales</span><strong>${new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(ganancias)}</strong></article></div><div class=report-grid><section><h3>Ocupación por día</h3>${table(ocupacion)}</section><section><h3>Ocupación y ganancias por tipo de habitación</h3>${table(tiposFormateados)}</section><section class=report-daily><h3>Días con mayores ingresos</h3>${table(diasFormateados)}</section></div>`;
+  } catch(error) {
+    contenedor.innerHTML=`<div class="box error"><strong>No se pudo cargar el reporte.</strong><p>${esc(error.message)}</p><button class=primary onclick=generarReporte()>Reintentar</button></div>`;
+  }
+}
+async function descargarReportePdf() {
+  const inicio=reporteInicio.value, fin=reporteFin.value;
+  if(!inicio || !fin || inicio>fin) return alert('Selecciona un rango de fechas válido.');
+  const boton=document.getElementById('btnDescargarReporte');
+  const textoOriginal=boton.innerHTML;
+  boton.disabled=true;
+  boton.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Generando PDF...';
+  try {
+    const respuesta=await fetch(`/api/reportes/pdf-ganancias?inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}`,{headers:{Authorization:'Bearer '+token}});
+    if(!respuesta.ok){
+      const error=await respuesta.json().catch(()=>({}));
+      throw Error(Array.isArray(error.message)?error.message.join(', '):error.message||'No se pudo generar el PDF');
+    }
+    if(respuesta.headers.get('X-Report-Version')!=='tipos-ganancias-v2') throw Error('El servidor sigue usando el generador anterior. Ejecuta nuevamente el build y reinicia el servidor.');
+    const archivo=await respuesta.blob();
+    if(archivo.type!=='application/pdf' || archivo.size<100) throw Error('El archivo PDF generado no es válido.');
+    const url=URL.createObjectURL(archivo), enlace=document.createElement('a');
+    enlace.href=url;
+    enlace.download=`reporte-hotel-${inicio}-${fin}-ingresos.pdf`;
+    document.body.appendChild(enlace);
+    enlace.click();
+    enlace.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  } catch(error) {
+    alert(error.message);
+  } finally {
+    boton.disabled=false;
+    boton.innerHTML=textoOriginal;
+  }
+}
+
 load('dashboard', 'Dashboard');

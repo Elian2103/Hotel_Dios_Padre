@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { AsignacionLimpieza } from '../asignaciones-limpieza/entities/asignacion-limpieza.entity';
@@ -17,10 +17,25 @@ export class LimpiezaService {
   ) {}
   list() {
     return this.ds.query(
-      'SELECT a.*,h.numero,u.nombre camarista FROM asignaciones_limpieza a JOIN habitaciones h ON h.id=a.habitacion_id JOIN usuarios u ON u.id=a.camarista_id ORDER BY a.fecha DESC,a.id DESC',
+      `SELECT a.*,h.numero,u.nombre camarista
+       FROM asignaciones_limpieza a
+       JOIN habitaciones h ON h.id=a.habitacion_id
+       JOIN usuarios u ON u.id=a.camarista_id
+       WHERE a.estado <> 'Finalizada'
+          OR (a.fecha = CURDATE() AND CURTIME() < '23:59:00')
+       ORDER BY a.fecha DESC,a.id DESC`,
     );
   }
   async asignar(d: any) {
+    const hoy = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Mexico_City',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(new Date());
+    if (d.fecha && d.fecha < hoy) {
+      throw new BadRequestException(
+        'La fecha de asignación no puede ser anterior a la fecha actual',
+      );
+    }
     let x = await this.a.findOneBy({
       habitacionId: d.habitacionId,
       fecha: d.fecha,
@@ -66,7 +81,13 @@ export class LimpiezaService {
   }
   observaciones() {
     return this.ds.query(
-      'SELECT o.*,h.numero,u.nombre usuario FROM observaciones o JOIN habitaciones h ON h.id=o.habitacion_id JOIN usuarios u ON u.id=o.usuario_id ORDER BY o.id DESC',
+      `SELECT o.*,h.numero,u.nombre usuario
+       FROM observaciones o
+       JOIN habitaciones h ON h.id=o.habitacion_id
+       JOIN usuarios u ON u.id=o.usuario_id
+       WHERE DATE(o.created_at) = CURDATE()
+         AND CURTIME() < '23:59:00'
+       ORDER BY o.id DESC`,
     );
   }
 }

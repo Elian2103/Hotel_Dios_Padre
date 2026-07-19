@@ -42,6 +42,13 @@ export class ReservacionesService {
       .groupBy('r.id')
       .orderBy('r.id', 'DESC');
 
+    consulta.andWhere(
+      `(r.estado IN ('En proceso','Confirmada')
+        OR (r.estado IN ('Cancelada','Finalizada')
+            AND DATE(r.fecha_fin)=CURDATE()
+            AND CURTIME() < '23:59:00'))`,
+    );
+
     if (estado) consulta.andWhere('r.estado = :estado', { estado });
     return consulta.getRawMany();
   }
@@ -50,6 +57,7 @@ export class ReservacionesService {
     if (!inicio || !fin) {
       throw new BadRequestException('Selecciona fecha de entrada y salida');
     }
+    this.validarFechaActual(inicio);
     if (new Date(fin) <= new Date(inicio)) {
       throw new BadRequestException(
         'La salida debe ser posterior a la entrada',
@@ -90,7 +98,7 @@ export class ReservacionesService {
     const permitidas = new Set(disponibles.map((habitacion) => habitacion.id));
     const bloqueadas = await this.habitaciones.find({
       where: { id: In(habitacionIds) },
-      relations: { estado: true },
+      relations: { estado: true, tipo: true },
     });
     bloqueadas
       .filter(
@@ -103,6 +111,12 @@ export class ReservacionesService {
         'Una de las habitaciones seleccionadas ya no está disponible',
       );
     }
+    const preciosPorHabitacion = new Map(
+      bloqueadas.map((habitacion) => [
+        habitacion.id,
+        Number(habitacion.tipo?.precio || 0),
+      ]),
+    );
 
     return this.dataSource.transaction(async (manager) => {
       let huespedId = Number(data.huespedId);
@@ -138,7 +152,7 @@ export class ReservacionesService {
           manager.create(ReservacionHabitacion, {
             reservacionId: reservacion.id,
             habitacionId,
-            precio: Number(data.precio || 0),
+            precio: preciosPorHabitacion.get(habitacionId) || 0,
           }),
         );
       }
@@ -174,6 +188,12 @@ export class ReservacionesService {
 
     const enlacesActuales = await this.enlaces.findBy({ reservacionId: id });
     const actualesIds = enlacesActuales.map((enlace) => enlace.habitacionId);
+    const preciosActuales = new Map(
+      enlacesActuales.map((enlace) => [
+        enlace.habitacionId,
+        Number(enlace.precio || 0),
+      ]),
+    );
 
     const disponibles = await this.disponibles(data.fechaInicio, data.fechaFin);
     const permitidas = new Set([
@@ -185,6 +205,16 @@ export class ReservacionesService {
     ) {
       throw new BadRequestException('Una habitación ya no está disponible');
     }
+    const habitacionesSeleccionadas = await this.habitaciones.find({
+      where: { id: In(nuevosIds) },
+      relations: { tipo: true },
+    });
+    const preciosPorHabitacion = new Map(
+      habitacionesSeleccionadas.map((habitacion) => [
+        habitacion.id,
+        Number(habitacion.tipo?.precio || 0),
+      ]),
+    );
 
     return this.dataSource.transaction(async (manager) => {
       let huespedId = Number(data.huespedId || actual.huespedId);
@@ -220,7 +250,10 @@ export class ReservacionesService {
           manager.create(ReservacionHabitacion, {
             reservacionId: id,
             habitacionId,
-            precio: Number(data.precio || 0),
+            precio:
+              preciosActuales.get(habitacionId) ||
+              preciosPorHabitacion.get(habitacionId) ||
+              0,
           }),
         );
       }
@@ -361,9 +394,24 @@ export class ReservacionesService {
     if (!data.fechaInicio || !data.fechaFin) {
       throw new BadRequestException('Selecciona fecha de entrada y salida');
     }
+    this.validarFechaActual(data.fechaInicio);
     if (new Date(data.fechaFin) <= new Date(data.fechaInicio)) {
       throw new BadRequestException(
         'La salida debe ser posterior a la entrada',
+      );
+    }
+  }
+
+  private validarFechaActual(fecha: string) {
+    const hoy = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Mexico_City',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date());
+    if (fecha < hoy) {
+      throw new BadRequestException(
+        'La fecha de entrada no puede ser anterior a la fecha actual',
       );
     }
   }
