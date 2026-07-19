@@ -123,13 +123,9 @@ async function habitaciones() {
     { id: 9, nombre: 'Fuera de servicio' },
   ];
   window.tiposHabitacion = tipos;
-<<<<<<< HEAD
-  content.innerHTML = `<div class="box"><h3 id="habitacionFormTitulo">Nueva habitación</h3><form id="habitacionForm"><input type=hidden name=id><input name=numero placeholder="Número" required><input name=piso type=number placeholder="Piso"><select name=tipoId>${tipos.map((t) => `<option value=${t.id}>${esc(t.nombre)}</option>`)}</select><input name=estadoId type=number value=1 placeholder="ID estado"><textarea name=observaciones placeholder="Observaciones"></textarea><button class=primary>Guardar habitación</button><button class="primary danger" type=button onclick="limpiarHabitacionForm()">Cancelar edición</button></form></div><div class="room-grid">${rows.map((h) => habitacionCard(h, tipos)).join('')}</div>`;
-=======
   window.estadosHabitacion = estados;
   const estadoInicial = estados.find((e) => e.nombre === 'Disponible')?.id ?? estados[0]?.id ?? '';
   content.innerHTML = `<section class=rooms-header><div><h2>Habitaciones</h2><p>Administra los datos, estados y fotografías de cada habitación.</p></div></section><div class="box room-form-box"><h3 id="habitacionFormTitulo">Nueva habitación</h3><form id="habitacionForm" class=room-form><input type=hidden name=id><label><span>Número *</span><input name=numero placeholder="Ej. 101" required></label><label><span>Piso</span><input name=piso type=number placeholder="Ej. 1"></label><label><span>Tipo de habitación *</span><select name=tipoId required><option value="">Selecciona un tipo</option>${tipos.map((t) => `<option value=${t.id}>${esc(t.nombre)}</option>`).join('')}</select></label><label><span>Estado *</span><select name=estadoId required><option value="">Selecciona un estado</option>${estados.map((e) => `<option value=${e.id} ${Number(e.id) === Number(estadoInicial) ? 'selected' : ''}>${esc(e.nombre)}</option>`).join('')}</select></label><label class=wide><span>Observaciones</span><textarea name=observaciones placeholder="Detalles o notas de la habitación"></textarea></label><div class="room-form-actions"><button class=primary><i class="fa-solid fa-floppy-disk"></i> Guardar habitación</button><button type=button onclick="limpiarHabitacionForm()">Cancelar edición</button></div></form></div><div class="room-grid">${rows.map(habitacionCard).join('')}</div>`;
->>>>>>> 8a46921 (second commit)
   habitacionForm.onsubmit = guardarHabitacion;
 }
 async function guardarHabitacion(e) {
