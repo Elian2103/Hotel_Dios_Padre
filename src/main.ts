@@ -25,10 +25,10 @@ async function bootstrap() {
 
   const port = Number(process.env.PORT) || 3000;
 
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 
-  console.log(`Servidor ejecutándose en http://localhost:${port}`);
-  console.log(`API disponible en http://localhost:${port}/api`);
+  console.log(`Servidor ejecutándose en el puerto ${port}`);
+  console.log(`API disponible en /api`);
 }
 
 void bootstrap();
