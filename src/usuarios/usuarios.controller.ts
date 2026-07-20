@@ -10,8 +10,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { CreateUsuarioDto } from './dto/create-usuario.dto';
+import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { UsuariosService } from './usuarios.service';
 
 @Controller('usuarios')
@@ -21,23 +23,23 @@ export class UsuariosController {
   constructor(private readonly service: UsuariosService) {}
 
   @Get()
-  all() {
+  findAll() {
     return this.service.findAll();
   }
 
   @Get('roles')
-  roles() {
+  findRoles() {
     return this.service.findRoles();
   }
 
   @Post()
-  create(@Body() data: any) {
-    return this.service.create(data);
+  create(@Body() dto: CreateUsuarioDto) {
+    return this.service.create(dto);
   }
 
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() data: any) {
-    return this.service.update(id, data);
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUsuarioDto) {
+    return this.service.update(id, dto);
   }
 
   @Patch(':id/estado')

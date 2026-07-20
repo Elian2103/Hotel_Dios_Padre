@@ -1,12 +1,14 @@
 import {
-  BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Not, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { Not, Repository } from 'typeorm';
 import { Rol } from '../roles/entities/rol.entity';
+import { CreateUsuarioDto } from './dto/create-usuario.dto';
+import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { Usuario } from './entities/usuario.entity';
 
 @Injectable()
@@ -14,129 +16,241 @@ export class UsuariosService {
   constructor(
     @InjectRepository(Usuario)
     private readonly repo: Repository<Usuario>,
+
     @InjectRepository(Rol)
-    private readonly roles: Repository<Rol>,
+    private readonly rolesRepo: Repository<Rol>,
   ) {}
 
   findAll() {
     return this.repo
-      .createQueryBuilder('u')
-      .leftJoinAndSelect('u.rol', 'rol')
+      .createQueryBuilder('usuario')
+      .leftJoinAndSelect('usuario.rol', 'rol')
       .select([
-        'u.id',
-        'u.nombre',
-        'u.apellidoPaterno',
-        'u.apellidoMaterno',
-        'u.telefono',
-        'u.correo',
-        'u.usuario',
-        'u.rolId',
-        'u.activo',
+        'usuario.id',
+        'usuario.nombre',
+        'usuario.apellidoPaterno',
+        'usuario.apellidoMaterno',
+        'usuario.telefono',
+        'usuario.correo',
+        'usuario.usuario',
+        'usuario.rolId',
+        'usuario.activo',
         'rol.id',
         'rol.nombre',
       ])
-      .orderBy('u.id', 'DESC')
+      .orderBy('usuario.id', 'DESC')
       .getMany();
   }
 
   findRoles() {
-    return this.roles.find({
-      where: { activo: true },
-      order: { nombre: 'ASC' },
+    return this.rolesRepo.find({
+      where: {
+        activo: true,
+      },
+      order: {
+        nombre: 'ASC',
+      },
     });
   }
 
-  private normalize(data: any): any {
-    const normalized = {
-      ...data,
-      nombre: data.nombre?.trim() || null,
-      apellidoPaterno: data.apellidoPaterno?.trim() || null,
-      apellidoMaterno: data.apellidoMaterno?.trim() || null,
-      telefono: data.telefono?.trim() || null,
-      correo: data.correo?.trim() || null,
-      usuario: data.usuario?.trim(),
-      rolId: data.rolId ? Number(data.rolId) : undefined,
+  private async validarRol(rolId: number): Promise<Rol> {
+    const rol = await this.rolesRepo.findOne({
+      where: {
+        id: rolId,
+      },
+    });
+
+    if (!rol) {
+      throw new NotFoundException('El rol seleccionado no existe');
+    }
+
+    if (!rol.activo) {
+      throw new ConflictException('El rol seleccionado se encuentra inactivo');
+    }
+
+    return rol;
+  }
+
+  private async validarDuplicados(
+    usuario: string,
+    correo?: string,
+    excluirId?: number,
+  ): Promise<void> {
+    const usuarioExistente = await this.repo.findOne({
+      where: excluirId
+        ? {
+            usuario,
+            id: Not(excluirId),
+          }
+        : {
+            usuario,
+          },
+    });
+
+    if (usuarioExistente) {
+      throw new ConflictException(
+        'El nombre de usuario ya se encuentra registrado',
+      );
+    }
+
+    if (!correo) return;
+
+    const correoExistente = await this.repo.findOne({
+      where: excluirId
+        ? {
+            correo,
+            id: Not(excluirId),
+          }
+        : {
+            correo,
+          },
+    });
+
+    if (correoExistente) {
+      throw new ConflictException(
+        'El correo electrónico ya se encuentra registrado',
+      );
+    }
+  }
+
+  private limpiarRespuesta(usuario: Usuario) {
+    return {
+      id: usuario.id,
+      nombre: usuario.nombre,
+      apellidoPaterno: usuario.apellidoPaterno,
+      apellidoMaterno: usuario.apellidoMaterno,
+      telefono: usuario.telefono,
+      correo: usuario.correo,
+      usuario: usuario.usuario,
+      rolId: usuario.rolId,
+      activo: usuario.activo,
     };
-    delete normalized.id;
-    delete normalized.rol;
-
-    if (!normalized.usuario) {
-      throw new BadRequestException('El usuario es obligatorio');
-    }
-
-    if (!normalized.rolId) {
-      throw new BadRequestException('El rol es obligatorio');
-    }
-
-    return normalized;
   }
 
-  async create(data: any) {
-    const normalized = this.normalize(data);
-    if (!data.password) {
-      throw new BadRequestException('La contrasena es obligatoria');
-    }
+  async create(dto: CreateUsuarioDto) {
+    await this.validarRol(dto.rolId);
 
-    const conditions: any[] = [{ usuario: normalized.usuario }];
-    if (normalized.correo) conditions.push({ correo: normalized.correo });
+    await this.validarDuplicados(dto.usuario, dto.correo);
 
-    if (await this.repo.findOne({ where: conditions })) {
-      throw new BadRequestException('Usuario o correo registrado');
-    }
+    const passwordHash = await bcrypt.hash(dto.password, 10);
 
-    normalized.password = await bcrypt.hash(data.password, 10);
-    return this.repo.save(this.repo.create(normalized));
-  }
-
-  async update(id: number, data: any) {
-    const usuario = await this.repo.findOneBy({ id });
-    if (!usuario) throw new NotFoundException('Usuario no encontrado');
-
-    const normalized = this.normalize({
-      ...usuario,
-      ...data,
+    const nuevoUsuario = this.repo.create({
+      nombre: dto.nombre,
+      apellidoPaterno: dto.apellidoPaterno ?? null,
+      apellidoMaterno: dto.apellidoMaterno ?? null,
+      telefono: dto.telefono ?? null,
+      correo: dto.correo ?? null,
+      usuario: dto.usuario,
+      password: passwordHash,
+      rolId: dto.rolId,
+      activo: dto.activo ?? true,
     });
 
-    if (
-      await this.repo.findOne({
-        where: { usuario: normalized.usuario, id: Not(id) },
-      })
-    ) {
-      throw new BadRequestException('Usuario registrado');
+    const usuarioGuardado = await this.repo.save(nuevoUsuario);
+
+    return {
+      message: 'Usuario registrado correctamente',
+      usuario: this.limpiarRespuesta(usuarioGuardado),
+    };
+  }
+
+  async update(id: number, dto: UpdateUsuarioDto) {
+    const usuario = await this.repo.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
     }
 
-    if (
-      normalized.correo &&
-      (await this.repo.findOne({
-        where: { correo: normalized.correo, id: Not(id) },
-      }))
-    ) {
-      throw new BadRequestException('Correo registrado');
+    const usuarioActualizado = dto.usuario ?? usuario.usuario;
+    const correoActualizado =
+      dto.correo !== undefined ? dto.correo : (usuario.correo ?? undefined);
+    const rolIdActualizado = dto.rolId ?? usuario.rolId;
+
+    await this.validarRol(rolIdActualizado);
+
+    await this.validarDuplicados(
+      usuarioActualizado,
+      correoActualizado,
+      usuario.id,
+    );
+
+    usuario.nombre = dto.nombre ?? usuario.nombre;
+    usuario.apellidoPaterno =
+      dto.apellidoPaterno !== undefined
+        ? dto.apellidoPaterno
+        : usuario.apellidoPaterno;
+    usuario.apellidoMaterno =
+      dto.apellidoMaterno !== undefined
+        ? dto.apellidoMaterno
+        : usuario.apellidoMaterno;
+    usuario.telefono =
+      dto.telefono !== undefined ? dto.telefono : usuario.telefono;
+    usuario.correo = dto.correo !== undefined ? dto.correo : usuario.correo;
+    usuario.usuario = usuarioActualizado;
+    usuario.rolId = rolIdActualizado;
+    usuario.activo = dto.activo ?? usuario.activo;
+
+    if (dto.password) {
+      usuario.password = await bcrypt.hash(dto.password, 10);
     }
 
-    if (data.password) {
-      normalized.password = await bcrypt.hash(data.password, 10);
-    } else {
-      delete normalized.password;
-    }
+    await this.repo.save(usuario);
 
-    await this.repo.update(id, normalized);
-    return { message: 'Usuario actualizado' };
+    return {
+      message: 'Usuario actualizado correctamente',
+    };
   }
 
   async toggle(id: number) {
-    const usuario = await this.repo.findOneBy({ id });
-    if (!usuario) throw new NotFoundException('Usuario no encontrado');
+    const usuario = await this.repo.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
     usuario.activo = !usuario.activo;
+
     await this.repo.save(usuario);
-    return { activo: usuario.activo };
+
+    return {
+      message: usuario.activo
+        ? 'Usuario activado correctamente'
+        : 'Usuario desactivado correctamente',
+      activo: usuario.activo,
+    };
   }
 
   async remove(id: number) {
-    const usuario = await this.repo.findOneBy({ id });
-    if (!usuario) throw new NotFoundException('Usuario no encontrado');
+    const usuario = await this.repo.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    if (!usuario.activo) {
+      return {
+        message: 'El usuario ya se encuentra inactivo',
+      };
+    }
+
     usuario.activo = false;
+
     await this.repo.save(usuario);
-    return { message: 'Usuario eliminado' };
+
+    return {
+      message: 'Usuario desactivado correctamente',
+    };
   }
 }
