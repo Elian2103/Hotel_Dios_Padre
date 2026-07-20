@@ -128,19 +128,169 @@ async function habitaciones() {
   window.estadosHabitacion = estados;
   const estadoInicial =
     estados.find((e) => e.nombre === 'Disponible')?.id ?? estados[0]?.id ?? '';
-  content.innerHTML = `<section class=rooms-header><div><h2>Habitaciones</h2><p>Administra los datos, estados y fotografías de cada habitación.</p></div></section><div class="box room-form-box"><h3 id="habitacionFormTitulo">Nueva habitación</h3><form id="habitacionForm" class=room-form><input type=hidden name=id><label><span>Número de Habitacion *</span><input name=numero placeholder="Ej. 101" required></label><label><span>Piso</span><input name=piso type=number placeholder="Ej. 1"></label><label><span>Tipo de habitación *</span><select name=tipoId required><option value="">Selecciona un tipo</option>${tipos.map((t) => `<option value=${t.id}>${esc(t.nombre)}</option>`).join('')}</select></label><label><span>Estado *</span><select name=estadoId required><option value="">Selecciona un estado</option>${estados.map((e) => `<option value=${e.id} ${Number(e.id) === Number(estadoInicial) ? 'selected' : ''}>${esc(e.nombre)}</option>`).join('')}</select></label><label class=wide><span>Observaciones</span><textarea name=observaciones placeholder="Detalles o notas de la habitación"></textarea></label><div class="room-form-actions"><button class=primary><i class="fa-solid fa-floppy-disk"></i> Guardar habitación</button><button class="primary danger" type=button onclick="limpiarHabitacionForm()"><i class="fa-solid fa-ban"></i> Cancelar edición</button></div></form></div><div class="room-grid">${rows.map(habitacionCard).join('')}</div>`;
+  content.innerHTML = `
+  <section class="rooms-header">
+    <div>
+      <h2>Habitaciones</h2>
+      <p>Administra los datos, estados y fotografías de cada habitación.</p>
+    </div>
+  </section>
+
+  <div class="box room-form-box">
+    <h3 id="habitacionFormTitulo">Nueva habitación</h3>
+
+    <form id="habitacionForm" class="room-form">
+      <input type="hidden" name="id">
+
+      <label>
+        <span>Número de habitación *</span>
+       <input
+          name="numero"
+          type="text"
+          placeholder="Ej. 101"
+          required
+          minlength="1"
+          maxlength="4"
+          inputmode="numeric"
+          pattern="[0-9]{1,4}"
+          title="Ingresa únicamente números"
+        >
+      </label>
+
+      <label>
+        <span>Piso</span>
+        <input
+          name="piso"
+          type="number"
+          placeholder="Ej. 1"
+          min="0"
+          max="20"
+          step="1"
+          inputmode="numeric"
+        >
+      </label>
+
+      <label>
+        <span>Tipo de habitación *</span>
+        <select name="tipoId" required>
+          <option value="">Selecciona un tipo</option>
+
+          ${tipos
+            .map(
+              (tipo) =>
+                `<option value="${tipo.id}">${esc(tipo.nombre)}</option>`,
+            )
+            .join('')}
+        </select>
+      </label>
+
+      <label>
+        <span>Estado *</span>
+        <select name="estadoId" required>
+          <option value="">Selecciona un estado</option>
+
+          ${estados
+            .map(
+              (estado) => `
+                <option
+                  value="${estado.id}"
+                  ${
+                    Number(estado.id) === Number(estadoInicial)
+                      ? 'selected'
+                      : ''
+                  }
+                >
+                  ${esc(estado.nombre)}
+                </option>
+              `,
+            )
+            .join('')}
+        </select>
+      </label>
+
+      <label class="wide">
+        <span>Observaciones</span>
+        <textarea
+          name="observaciones"
+          placeholder="Detalles o notas de la habitación"
+          maxlength="1000"
+        ></textarea>
+      </label>
+
+      <div class="room-form-actions">
+        <button class="primary" type="submit">
+          <i class="fa-solid fa-floppy-disk"></i>
+          Guardar habitación
+        </button>
+
+        <button
+          class="primary danger"
+          type="button"
+          onclick="limpiarHabitacionForm()"
+        >
+          <i class="fa-solid fa-ban"></i>
+          Cancelar edición
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="room-grid">
+    ${rows.map(habitacionCard).join('')}
+  </div>
+`;
   habitacionForm.onsubmit = guardarHabitacion;
+  habitacionForm.numero.addEventListener('input', (event) => {
+    event.target.value = event.target.value.replace(/\D/g, '').slice(0, 4);
+  });
+
+  habitacionForm.piso.addEventListener('input', (event) => {
+    const valor = event.target.value.replace(/\D/g, '').slice(0, 3);
+
+    if (valor === '') {
+      event.target.value = '';
+      return;
+    }
+
+    event.target.value = Math.min(Number(valor), 20);
+  });
 }
 async function guardarHabitacion(e) {
   e.preventDefault();
-  const d = Object.fromEntries(new FormData(e.target));
-  const id = d.id;
-  delete d.id;
-  await api(id ? `/habitaciones/${id}` : '/habitaciones', {
-    method: id ? 'PATCH' : 'POST',
-    body: JSON.stringify(d),
-  });
-  habitaciones();
+
+  const form = e.currentTarget;
+
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+
+  const datos = Object.fromEntries(new FormData(form));
+  const id = datos.id;
+
+  delete datos.id;
+
+  datos.numero = datos.numero.trim();
+
+  datos.piso = datos.piso === '' ? null : Number(datos.piso);
+
+  datos.tipoId = Number(datos.tipoId);
+  datos.estadoId = Number(datos.estadoId);
+
+  datos.observaciones =
+    datos.observaciones.trim() === '' ? null : datos.observaciones.trim();
+
+  try {
+    await api(id ? `/habitaciones/${id}` : '/habitaciones', {
+      method: id ? 'PATCH' : 'POST',
+      body: JSON.stringify(datos),
+    });
+
+    await habitaciones();
+  } catch (error) {
+    console.error(error);
+    alert(error.message || 'No se pudo guardar la habitación');
+  }
 }
 function editarHabitacion(h) {
   const f = document.getElementById('habitacionForm');
