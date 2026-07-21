@@ -1604,4 +1604,94 @@ button {
     background-color: #16a34a !important;
 }
 
+/* ==========================================
+   MENÚ DESPLEGABLE EN MÓVILES (LIMPIO SIN PUNTOS)
+   ========================================== */
+@media (max-width: 768px) {
 
+    .mobile-header {
+        display: none !important;
+    }
+
+    body {
+        display: flex !important;
+        flex-direction: row !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        overflow-x: hidden !important;
+    }
+
+    /* 1. Estado colapsado: 50px de ancho */
+    aside {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 50px !important; 
+        height: 100vh !important;
+        z-index: 99999 !important;
+        overflow: hidden !important;
+        transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 4px 0 10px rgba(0, 0, 0, 0.25) !important;
+    }
+
+    /* Ocultar el contenido interno mientras el menú está colapsado (Quita los puntos) */
+    aside nav, 
+    aside center, 
+    aside .aside-logo {
+        opacity: 0 !important;
+        transition: opacity 0.2s ease !important;
+        pointer-events: none !important;
+    }
+
+    /* 2. Estado desplegado: 250px de ancho al tocar/hover */
+    aside:hover,
+    aside:active,
+    aside.active-mobile {
+        width: 250px !important;
+        overflow-y: auto !important;
+    }
+
+    /* Hacer visible todo el contenido cuando se despliega el menú */
+    aside:hover nav,
+    aside:active nav,
+    aside.active-mobile nav,
+    aside:hover center,
+    aside:active center,
+    aside.active-mobile center,
+    aside:hover .aside-logo,
+    aside:active .aside-logo,
+    aside.active-mobile .aside-logo {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+
+    /* 3. FIX DE TEXTOS Y ELIMINACIÓN DE VIÑETAS/PUNTOS */
+    aside nav ul, 
+    aside nav li {
+        list-style: none !important;
+        list-style-type: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    aside nav a, 
+    aside nav button, 
+    aside nav ul li {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        color: #ffffff !important; /* Texto blanco legible */
+        font-size: 14px !important;
+        white-space: nowrap !important; /* Evita que el texto se rompa en varias líneas */
+        padding: 10px 15px !important;
+    }
+
+    /* Ajuste del contenido para no quedar encimado */
+    main {
+        width: calc(100% - 50px) !important;
+        margin-left: 50px !important;
+        padding: 12px !important;
+        box-sizing: border-box !important;
+    }
+}
