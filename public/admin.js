@@ -31,7 +31,7 @@ const api = async (url, opt = {}) => {
   }
 };
 const modules = [
-  ['Panel Principal', 'dashboard', '<i class="fa-solid fa-house"></i>'],
+  ['Panel Principal Brandon ', 'dashboard', '<i class="fa-solid fa-house"></i>'],
   ['Habitaciones', 'habitaciones', '<i class="fa-solid fa-bed"></i>'],
   [
     'Reservaciones',
