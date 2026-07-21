@@ -9,7 +9,7 @@ export class TarifasService {
     return this.repo.find({ order: { id: 'DESC' } });
   }
   async findOne(id: number) {
-    const x = await this.repo.findOneBy({ id } as any);
+    const x = await this.repo.findOneBy({ id });
     if (!x) throw new NotFoundException('Registro no encontrado');
     return x;
   }

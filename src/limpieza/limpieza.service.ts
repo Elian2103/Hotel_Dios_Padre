@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { AsignacionLimpieza } from '../asignaciones-limpieza/entities/asignacion-limpieza.entity';
@@ -29,7 +33,9 @@ export class LimpiezaService {
   async asignar(d: any) {
     const hoy = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'America/Mexico_City',
-      year: 'numeric', month: '2-digit', day: '2-digit',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
     }).format(new Date());
     if (d.fecha && d.fecha < hoy) {
       throw new BadRequestException(

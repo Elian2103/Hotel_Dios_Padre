@@ -27,7 +27,7 @@ describe('ReservacionesService historial visible', () => {
       expect.stringContaining("r.estado IN ('En proceso','Confirmada')"),
     );
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-      expect.stringContaining("DATE(r.fecha_fin)=CURDATE()"),
+      expect.stringContaining('DATE(r.fecha_fin)=CURDATE()'),
     );
     expect(queryBuilder.andWhere).toHaveBeenCalledWith(
       expect.stringContaining("CURTIME() < '23:59:00'"),

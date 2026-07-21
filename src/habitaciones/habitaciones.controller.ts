@@ -21,6 +21,9 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UsuarioActual } from '../common/decorators/usuario-actual.decorator';
+import { CreateHabitacionDto } from './dto/create-habitacion.dto';
+import { UpdateHabitacionDto } from './dto/update-habitacion.dto';
+import { CambiarEstadoHabitacionDto } from './dto/cambiar-estado-habitacion.dto';
 
 const directorioFotos = join(
   __dirname,
@@ -53,7 +56,7 @@ export class HabitacionesController {
 
   @Get('mis-asignadas')
   @Roles('Camarista')
-  mias(@UsuarioActual() usuario: any) {
+  mias(@UsuarioActual() usuario: { id: number }) {
     return this.service.asignadas(usuario.id);
   }
 
@@ -65,13 +68,16 @@ export class HabitacionesController {
 
   @Post()
   @Roles('Administrador')
-  create(@Body() data: any) {
+  create(@Body() data: CreateHabitacionDto) {
     return this.service.create(data);
   }
 
   @Patch(':id')
   @Roles('Administrador')
-  update(@Param('id', ParseIntPipe) id: number, @Body() data: any) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() data: UpdateHabitacionDto,
+  ) {
     return this.service.update(id, data);
   }
 
@@ -112,9 +118,9 @@ export class HabitacionesController {
   @Roles('Administrador')
   estado(
     @Param('id', ParseIntPipe) id: number,
-    @Body('estadoId') estadoId: number,
+    @Body() data: CambiarEstadoHabitacionDto,
   ) {
-    return this.service.estado(id, estadoId);
+    return this.service.estado(id, data.estadoId);
   }
 
   @Delete(':id')
