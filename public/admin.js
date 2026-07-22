@@ -31,7 +31,7 @@ const api = async (url, opt = {}) => {
   }
 };
 const modules = [
-  ['Panel Principal Brandon ', 'dashboard', '<i class="fa-solid fa-house"></i>'],
+  ['Panel Principal ', 'dashboard', '<i class="fa-solid fa-house"></i>'],
   ['Habitaciones', 'habitaciones', '<i class="fa-solid fa-bed"></i>'],
   [
     'Reservaciones',
@@ -42,7 +42,7 @@ const modules = [
   ['Limpieza', 'limpieza', '<i class="fa-solid fa-broom"></i>'],
   ['Usuarios', 'usuarios', '<i class="fa-solid fa-user-gear"></i>'],
   [
-    'Tipos de habitación',
+    'Tipos de Habitaciónes',
     'tipos-habitacion',
     '<i class="fa-solid fa-key"></i>',
   ],
@@ -129,11 +129,12 @@ async function habitaciones() {
   const estadoInicial =
     estados.find((e) => e.nombre === 'Disponible')?.id ?? estados[0]?.id ?? '';
   content.innerHTML = `
-  <section class="rooms-header">
+  <section class="reservation-hero">
     <div>
       <h2>Habitaciones</h2>
       <p>Administra los datos, estados y fotografías de cada habitación.</p>
     </div>
+    <div class="instant-badge">Control Total</div>
   </section>
 
   <div class="box room-form-box">
@@ -519,7 +520,14 @@ async function crud(id) {
   const rows = await api('/' + id),
     fields = camposCrud[id] || ['nombre'];
   const visibles = fields.filter((x) => x !== 'password');
-  content.innerHTML = `<div class=box><h3 id=crudTitle>Nuevo registro</h3><form id=f><input type=hidden name=id>${fields.map((x) => `<input name=${x} placeholder="${x}" ${x === 'password' ? 'type=password' : ''} ${x === 'nombre' ? 'required' : ''}>`).join('')}<button class=primary><i class="fa-solid fa-floppy-disk"></i> Guardar</button><button class="primary danger" type=button onclick="crud('${id}')"><i class="fa-solid fa-ban"></i> Cancelar edición</button></form></div><div class="box table-wrap"><table><thead><tr>${visibles.map((x) => `<th>${esc(x)}</th>`).join('')}<th>Acciones</th></tr></thead><tbody>${rows.map((r) => `<tr>${visibles.map((x) => `<td>${esc(r[x] ?? (x === 'rolId' ? r.rol?.nombre : ''))}</td>`).join('')}<td class=actions><button class="btn-editar" onclick='editarCrud(${JSON.stringify(id)},${JSON.stringify(r).replace(/'/g, '&#39;')})'><i class="fa-solid fa-pen-to-square"></i> Editar</button><button class="danger btn-eliminar" onclick="eliminarCrud('${id}',${r.id})"><i class="fa-solid fa-trash-can"></i> Eliminar</button></td></tr>`).join('')}</tbody></table></div>`;
+  content.innerHTML = `<section class="reservation-hero">
+    <div>
+      <p class="eyebrow">Gestión de Precios</p>
+      <h2>Precio Por Habitaciones</h2>
+      <p>Administra los datos de las Habitaciones.</p>
+    </div>
+    <div class="instant-badge">Inventario de Habitaciones</div>
+  </section><div class=box><h3 id=crudTitle>Nuevo registro</h3><form id=f><input type=hidden name=id>${fields.map((x) => `<input name=${x} placeholder="${x}" ${x === 'password' ? 'type=password' : ''} ${x === 'nombre' ? 'required' : ''}>`).join('')}<button class=primary><i class="fa-solid fa-floppy-disk"></i> Guardar</button><button class="primary danger" type=button onclick="crud('${id}')"><i class="fa-solid fa-ban"></i> Cancelar edición</button></form></div><div class="box table-wrap"><table><thead><tr>${visibles.map((x) => `<th>${esc(x)}</th>`).join('')}<th>Acciones</th></tr></thead><tbody>${rows.map((r) => `<tr>${visibles.map((x) => `<td>${esc(r[x] ?? (x === 'rolId' ? r.rol?.nombre : ''))}</td>`).join('')}<td class=actions><button class="btn-editar" onclick='editarCrud(${JSON.stringify(id)},${JSON.stringify(r).replace(/'/g, '&#39;')})'><i class="fa-solid fa-pen-to-square"></i> Editar</button><button class="danger btn-eliminar" onclick="eliminarCrud('${id}',${r.id})"><i class="fa-solid fa-trash-can"></i> Eliminar</button></td></tr>`).join('')}</tbody></table></div>`;
   f.onsubmit = async (e) => {
     e.preventDefault();
     const d = Object.fromEntries(new FormData(f)),
@@ -710,7 +718,7 @@ async function recepcion() {
 
 let origenReserva = 'reservaciones';
 function formularioReservaHtml(titulo) {
-  return `<section class="reservation-hero"><div><p class=eyebrow>Atención presencial</p><h2>${titulo}</h2><p>Captura al cliente, consulta disponibilidad y confirma su habitación inmediatamente.</p></div><div class=instant-badge>Confirmación inmediata</div></section><div class="box reservation-form-box"><form id=reservaForm><input type=hidden name=id><input type=hidden name=huespedId><fieldset><legend>1. Datos del cliente</legend><div class=form-grid>${campo('Nombre *', '<input name=nombre placeholder="Ej. María" required>')}${campo('Apellido paterno *', '<input name=apellidoPaterno placeholder="Ej. Hernández" required>')}${campo('Apellido materno', '<input name=apellidoMaterno placeholder="Ej. López">')}${campo('Teléfono *', '<input name=telefono type=tel placeholder="Ej. 772 123 4567" required>')}${campo('Correo electrónico', '<input name=correo type=email placeholder="cliente@correo.com">')}${campo('Identificación', '<input name=identificacion placeholder="INE o pasaporte">')}${campo('Dirección', '<textarea name=direccion placeholder="Domicilio del cliente"></textarea>', 'wide')}</div></fieldset><fieldset><legend>2. Datos de la estancia</legend><div class=form-grid>${campo('Fecha de entrada *', '<input name=fechaInicio type=date required>')}${campo('Fecha de salida *', '<input name=fechaFin type=date required>')}${campo('Adultos *', '<input name=adultos type=number min=1 value=1 required>')}${campo('Menores', '<input name=menores type=number min=0 value=0>')}</div><div class="form-btn-container"><button type=button class="btn-search action-btn" onclick="buscarDisponibles()"><i class="fa-solid fa-magnifying-glass"></i> Buscar habitaciones</button></div></fieldset></form><section class=room-selection><h3>3. Selecciona la habitación</h3><p class=helper>Las fotografías te ayudarán a identificar cada habitación.</p><div id=availableRooms class="available-grid empty-selection">Primero selecciona las fechas y busca disponibilidad.</div></section><div class=reservation-submit><span class=confirmation-note>✓ Se guardará como <strong>Confirmada</strong></span><button class="primary create-button" onclick="guardarReserva()"><i class="fa-solid fa-floppy-disk"></i> Crear reservación</button><button class="primary danger" type="button" onclick="limpiarReservaActual()"><i class="fa-solid fa-broom"></i> Limpiar</button></div></div>`;
+  return `<section class="reservation-hero"><div><p class=eyebrow>Atención presencial</p><h2>${titulo}</h2><p>Captura al cliente, consulta disponibilidad y confirma su habitación inmediatamente.</p></div><div class=instant-badge>Confirmación Inmediata</div></section><div class="box reservation-form-box"><form id=reservaForm><input type=hidden name=id><input type=hidden name=huespedId><fieldset><legend>1. Datos del cliente</legend><div class=form-grid>${campo('Nombre *', '<input name=nombre placeholder="Ej. María" required>')}${campo('Apellido paterno *', '<input name=apellidoPaterno placeholder="Ej. Hernández" required>')}${campo('Apellido materno', '<input name=apellidoMaterno placeholder="Ej. López">')}${campo('Teléfono *', '<input name=telefono type=tel placeholder="Ej. 772 123 4567" required>')}${campo('Correo electrónico', '<input name=correo type=email placeholder="cliente@correo.com">')}${campo('Identificación', '<input name=identificacion placeholder="INE o pasaporte">')}${campo('Dirección', '<textarea name=direccion placeholder="Domicilio del cliente"></textarea>', 'wide')}</div></fieldset><fieldset><legend>2. Datos de la estancia</legend><div class=form-grid>${campo('Fecha de entrada *', '<input name=fechaInicio type=date required>')}${campo('Fecha de salida *', '<input name=fechaFin type=date required>')}${campo('Adultos *', '<input name=adultos type=number min=1 value=1 required>')}${campo('Menores', '<input name=menores type=number min=0 value=0>')}</div><div class="form-btn-container"><button type=button class="btn-search action-btn" onclick="buscarDisponibles()"><i class="fa-solid fa-magnifying-glass"></i> Buscar habitaciones</button></div></fieldset></form><section class=room-selection><h3>3. Selecciona la habitación</h3><p class=helper>Las fotografías te ayudarán a identificar cada habitación.</p><div id=availableRooms class="available-grid empty-selection">Primero selecciona las fechas y busca disponibilidad.</div></section><div class=reservation-submit><span class=confirmation-note>✓ Se guardará como <strong>Confirmada</strong></span><button class="primary create-button" onclick="guardarReserva()"><i class="fa-solid fa-floppy-disk"></i> Crear reservación</button><button class="primary danger" type="button" onclick="limpiarReservaActual()"><i class="fa-solid fa-broom"></i> Limpiar</button></div></div>`;
 }
 function reservaCard(r) {
   return `<article class=reservation-card><div><span class=folio>${esc(r.folio)}</span><span class="status status-${String(r.estado).toLowerCase().replaceAll(' ', '-')}">${esc(r.estado)}</span></div><h3>${esc(r.huesped_nombre)} ${esc(r.huesped_apellido || '')}</h3><p>${esc(String(r.fecha_inicio).slice(0, 10))} → ${esc(String(r.fecha_fin).slice(0, 10))}</p><div class=selected-rooms>${detalleHabitaciones(r.habitaciones_detalle)}</div><small>Registró: ${esc(r.recepcionista_nombre || 'Recepción')}</small><div class=actions>${!['Cancelada', 'Finalizada'].includes(r.estado) ? `<button class="primary edit-button" onclick='editarReserva(${JSON.stringify(r).replace(/'/g, '&#39;')})'><i class="fa-solid fa-pen-to-square"></i> Editar</button><button class="primary danger" onclick="cambiarReserva(${r.id},'Cancelada')"><i class="fa-solid fa-ban"></i> Cancelar</button>` : ''}<button class="primary danger" onclick="eliminarReserva(${r.id})"><i class="fa-solid fa-trash-can"></i> Eliminar</button></div></article>`;
@@ -778,7 +786,7 @@ async function recepcion() {
 }
 async function dash() {
   const d = await api('/reportes/dashboard');
-  content.innerHTML = `<section class=dashboard-hero><div><p class=eyebrow>Resumen del hotel</p><h2>Panel de operaciones</h2><p>Consulta rápidamente el estado del Balneario Dios Padre.</p></div><div class=occupancy-ring style="--value:${Math.min(100, d.porcentajeOcupacion)}"><strong>${d.porcentajeOcupacion}%</strong><span>Ocupación</span></div></section><div class=dashboard-grid><article class="metric-card featured"><i class="fa-solid fa-calendar-check"></i><div><span>Reservaciones confirmadas</span><strong>${d.reservacionesConfirmadas}</strong></div></article>${d.estados.map((x) => `<article class=metric-card><i class="fa-solid fa-hotel"></i><div><span>${esc(x.nombre)}</span><strong>${x.total}</strong></div></article>`).join('')}</div><div class=quick-actions><h3>Acciones rápidas</h3><button class=create-button onclick="load('recepcion','Recepción')">Nueva reservación</button><button onclick="load('habitaciones','Habitaciones')">Administrar habitaciones y fotos</button></div>`;
+  content.innerHTML = `<section class=dashboard-hero><div><p class=eyebrow>Resumen del hotel</p><h2>Panel de operaciones</h2><p>Consulta rápidamente el estado del Balneario Dios Padre.</p></div><div class=occupancy-ring style="--value:${Math.min(100, d.porcentajeOcupacion)}"><strong>${d.porcentajeOcupacion}%</strong><span>Ocupación</span></div></section><div class=dashboard-grid><article class="metric-card featured"><i class="fa-solid fa-calendar-check"></i><div><span>Reservaciones confirmadas</span><strong>${d.reservacionesConfirmadas}</strong></div></article>${d.estados.map((x) => `<article class=metric-card><i class="fa-solid fa-hotel"></i><div><span>${esc(x.nombre)}</span><strong>${x.total}</strong></div></article>`).join('')}</div><div class=quick-actions><h3>Acciones rápidas</h3><button class=create-button onclick="load('recepcion','Recepción')"><i class="fa-solid fa-calendar-plus"></i> Nueva reservación</button><button onclick="load('habitaciones','Habitaciones')"><i class="fa-solid fa-bed"></i> Administrar habitaciones y fotos</button></div>`;
 }
 function recepcionCard(r, accion) {
   const habitacion =
@@ -1007,7 +1015,7 @@ async function usuarios() {
   window.usuariosData = rows;
   window.rolesData = roles;
   content.innerHTML = `
-  <section class="usuarios-header">
+  <section class="reservation-hero">
     <div>
       <h2>Usuarios</h2>
       <p>Gestión de accesos y perfiles del sistema.</p>
@@ -1409,4 +1417,40 @@ async function descargarReportePdf() {
   }
 }
 
-load('dashboard', 'Dashboard');
+load('dashboard', 'Panel Principal');
+// ==========================================
+// CONTROL DEL MENÚ RESPONSIVO EN MÓVILES
+// ==========================================
+
+// 1. Abrir la franja azul al tocarla
+document.querySelector('aside')?.addEventListener('click', function (e) {
+    if (window.innerWidth <= 768) {
+        // Solo abre si no está abierto ya
+        if (!this.classList.contains('active-mobile')) {
+            this.classList.add('active-mobile');
+        }
+    }
+});
+
+// 2. Cerrar si el usuario toca en la parte blanca (afuera del aside)
+document.addEventListener('click', function (e) {
+    if (window.innerWidth <= 768) {
+        const aside = document.querySelector('aside');
+        if (aside && !aside.contains(e.target)) {
+            aside.classList.remove('active-mobile');
+        }
+    }
+});
+
+// 3. Cerrar AUTOMÁTICAMENTE al dar clic en cualquier opción/módulo
+document.querySelectorAll('aside nav a, aside nav button, aside nav ul li').forEach(item => {
+    item.addEventListener('click', (e) => {
+        if (window.innerWidth <= 768) {
+            e.stopPropagation(); // DETIENE que el clic suba al 'aside' y lo vuelva a abrir
+            const aside = document.querySelector('aside');
+            if (aside) {
+                aside.classList.remove('active-mobile');
+            }
+        }
+    });
+});

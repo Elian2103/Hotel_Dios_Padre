@@ -3,8 +3,7 @@
 }
 
 /* Módulos de usuarios y reportes */
-.usuarios-header,.report-hero{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:18px}.usuarios-header h2,.usuarios-header p,.report-hero h2,.report-hero p{margin:0}.usuarios-header p,.report-hero p{color:#64748b;margin-top:5px}.usuarios-panel{padding:0;overflow:hidden}.usuarios-toolbar{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;padding:18px}.usuarios-toolbar input,.usuarios-toolbar select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px}.usuarios-table{width:100%;border-collapse:collapse}.usuarios-table th,.usuarios-table td{padding:14px 18px;text-align:left;border-bottom:1px solid #e2e8f0}.usuarios-table td>small,.usuario-info small{display:block;color:#64748b;margin-top:4px}.usuario-info{display:flex;align-items:center;gap:10px}.usuario-avatar{width:38px;height:38px;display:grid;place-items:center;border-radius:50%;background:#dbeafe;color:#1d4ed8;font-weight:800}.rol-badge{color:#0891b2;font-weight:700}.estado-usuario{display:inline-block;padding:5px 10px;border-radius:999px;font-size:13px;font-weight:700}.estado-usuario.activo{background:#dcfce7;color:#15803d}.estado-usuario.inactivo{background:#fee2e2;color:#b91c1c}.usuario-acciones{white-space:nowrap}.usuario-acciones button{width:36px;height:36px;padding:0;margin-right:4px}.usuarios-vacio{padding:38px;text-align:center;color:#64748b}.modal-usuario{position:fixed;inset:0;z-index:1000;display:none;place-items:center;padding:20px;background:#0f172a99}.modal-usuario.activo{display:grid}.modal-usuario-contenido{width:min(760px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:16px;box-shadow:0 24px 60px #0f172a44}.modal-usuario-contenido>header{display:flex;justify-content:space-between;align-items:start;padding:22px 24px;border-bottom:1px solid #e5e7eb}.modal-usuario-contenido h3,.modal-usuario-contenido p{margin:0}.modal-usuario-contenido p{color:#64748b;margin-top:5px}.modal-usuario-contenido header button{font-size:24px;background:transparent;border:0}.usuario-form{display:grid;grid-template-columns:1fr 1fr;gap:17px;padding:24px}.campo-usuario{display:flex;flex-direction:column;gap:7px;font-weight:600}.campo-usuario input,.campo-usuario select{padding:11px;border:1px solid #cbd5e1;border-radius:8px}.modal-usuario-acciones{grid-column:1/-1;display:flex;justify-content:flex-end;gap:10px}.report-hero{padding:24px;border-radius:18px;background:linear-gradient(135deg,#e0f2fe,#f8fafc)}.report-hero img{width:150px;height:70px;object-fit:contain}.report-filters{display:flex;align-items:end;gap:12px;flex-wrap:wrap}.report-filters label{display:flex;flex-direction:column;gap:6px;font-weight:700}.report-filters input{padding:10px;border:1px solid #cbd5e1;border-radius:8px}.quick-periods{display:flex;gap:6px}.report-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:15px;margin:18px 0}.report-summary article{padding:20px;border-radius:14px;background:#fff;box-shadow:0 6px 20px #0f4c8115}.report-summary span,.report-summary strong{display:block}.report-summary span{color:#64748b}.report-summary strong{font-size:30px;margin-top:5px;color:#0f4c81}.report-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:18px}.report-grid>section>h3{margin-left:4px}.report-daily{grid-column:1/-1}@media(max-width:750px){.usuarios-header,.report-hero{align-items:stretch;flex-direction:column}.usuarios-toolbar,.usuario-form,.report-summary,.report-grid{grid-template-columns:1fr}.modal-usuario-acciones{grid-column:1}.report-filters{align-items:stretch}.report-hero img{align-self:center}}
-
+.usuarios-header,.report-hero{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:18px}.usuarios-header h2,.usuarios-header p,.report-hero h2,.report-hero p{margin:0}.usuarios-header p,.report-hero p{color:#64748b;margin-top:5px}.usuarios-panel{padding:0;overflow:hidden}.usuarios-toolbar{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;padding:18px}.usuarios-toolbar input,.usuarios-toolbar select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px}.usuarios-table{width:100%;border-collapse:collapse}.usuarios-table th,.usuarios-table td{padding:14px 18px;text-align:left;border-bottom:1px solid #e2e8f0}.usuarios-table td>small,.usuario-info small{display:block;color:#64748b;margin-top:4px}.usuario-info{display:flex;align-items:center;gap:10px}.usuario-avatar{width:38px;height:38px;display:grid;place-items:center;border-radius:50%;background:#dbeafe;color:#1d4ed8;font-weight:800}.rol-badge{color:#0891b2;font-weight:700}.estado-usuario{display:inline-block;padding:5px 10px;border-radius:999px;font-size:13px;font-weight:700}.estado-usuario.activo{background:#dcfce7;color:#15803d}.estado-usuario.inactivo{background:#fee2e2;color:#b91c1c}.usuario-acciones{white-space:nowrap}.usuario-acciones button{width:36px;height:36px;padding:0;margin-right:4px}.usuarios-vacio{padding:38px;text-align:center;color:#64748b}.modal-usuario{position:fixed;inset:0;z-index:1000;display:none;place-items:center;padding:20px;background:#0f172a99}.modal-usuario.activo{display:grid}.modal-usuario-contenido{width:min(760px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:16px;box-shadow:0 24px 60px #0f172a44}.modal-usuario-contenido>header{display:flex;justify-content:space-between;align-items:start;padding:22px 24px;border-bottom:1px solid #e5e7eb}.modal-usuario-contenido h3,.modal-usuario-contenido p{margin:0}.modal-usuario-contenido p{color:#64748b;margin-top:5px}.modal-usuario-contenido header button{font-size:24px;background:transparent;border:0}.usuario-form{display:grid;grid-template-columns:1fr 1fr;gap:17px;padding:24px}.campo-usuario{display:flex;flex-direction:column;gap:7px;font-weight:600}.campo-usuario input,.campo-usuario select{padding:11px;border:1px solid #cbd5e1;border-radius:8px}.modal-usuario-acciones{grid-column:1/-1;display:flex;justify-content:flex-end;gap:10px}.report-hero{padding:24px;border-radius:18px;background:linear-gradient(135deg, #172554, #1d4ed8 55%, #06b6d4);color:#ffffff}.report-hero h2{color:#ffffff}.report-hero p{color:#e2e8f0;margin-top:5px}.report-hero .eyebrow{color:#f0f3f6;font-weight:700;text-transform:uppercase;font-size:12px}.report-hero img{width:150px;height:70px;object-fit:contain}.report-filters{display:flex;align-items:end;gap:12px;flex-wrap:wrap}.report-filters label{display:flex;flex-direction:column;gap:6px;font-weight:700}.report-filters input{padding:10px;border:1px solid #cbd5e1;border-radius:8px}.quick-periods{display:flex;gap:6px}.report-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:15px;margin:18px 0}.report-summary article{padding:20px;border-radius:14px;background:#fff;box-shadow:0 6px 20px #0f4c8115}.report-summary span,.report-summary strong{display:block}.report-summary span{color:#64748b}.report-summary strong{font-size:30px;margin-top:5px;color:#0f4c81}.report-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:18px}.report-grid>section>h3{margin-left:4px}.report-daily{grid-column:1/-1}@media(max-width:750px){.usuarios-header,.report-hero{align-items:stretch;flex-direction:column}.usuarios-toolbar,.usuario-form,.report-summary,.report-grid{grid-template-columns:1fr}.modal-usuario-acciones{grid-column:1}.report-filters{align-items:stretch}.report-hero img{align-self:center}}
 body {
   margin: 0;
   font-family: Arial;
@@ -1605,7 +1604,7 @@ button {
 }
 
 /* ==========================================
-   MENÚ DESPLEGABLE EN MÓVILES (LIMPIO SIN PUNTOS)
+   MENÚ MÓVIL RESPONSIVO (ADAPTABLE A CUALQUIER ALTURA)
    ========================================== */
 @media (max-width: 768px) {
 
@@ -1622,76 +1621,201 @@ button {
         overflow-x: hidden !important;
     }
 
-    /* 1. Estado colapsado: 50px de ancho */
+    /* 1. Contenedor principal con flexbox vertical */
     aside {
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
         width: 50px !important; 
-        height: 100vh !important;
+        height: 100dvh !important; /* Adaptable a la altura real de pantallas móviles */
         z-index: 99999 !important;
-        overflow: hidden !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important; /* PERMITE SCROLL INTERNO SI NO CABEN LOS MÓDULOS */
         transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         box-shadow: 4px 0 10px rgba(0, 0, 0, 0.25) !important;
+        cursor: pointer;
+        display: flex !important;
+        flex-direction: column !important;
+        box-sizing: border-box !important;
+        /* REDONDEADO Y EFECTO FLOTANTE */
+        border-top-right-radius: 0px !important;
+        border-bottom-right-radius: 0px !important;
+        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.2) !important;
     }
 
-    /* Ocultar el contenido interno mientras el menú está colapsado (Quita los puntos) */
-    aside nav, 
-    aside center, 
-    aside .aside-logo {
+    /* Botón ☰ visible arriba al estar cerrado */
+    aside::before {
+        content: "\f0c9" !important;
+        font-family: "Font Awesome 6 Free", "Font Awesome 5 Free" !important;
+        font-weight: 900 !important;
+        color: white !important;
+        font-size: 20px !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        min-height: 50px !important;
+        width: 50px !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        z-index: 100000 !important;
+    }
+
+    /* Ocultar y desactivar interacción mientras la franja esté colapsada */
+    aside > * {
         opacity: 0 !important;
         transition: opacity 0.2s ease !important;
         pointer-events: none !important;
     }
 
-    /* 2. Estado desplegado: 250px de ancho al tocar/hover */
-    aside:hover,
-    aside:active,
-    aside.active-mobile {
+    /* 2. Estado desplegado */
+    aside.active-mobile,
+    aside:hover {
         width: 250px !important;
-        overflow-y: auto !important;
+        height: calc(100dvh - 20px) !important; /* Ligeramente despegado arriba y abajo */
+        top: 10px !important; /* Centrado vertical */
+        left: 0 !important;
+        
+        /* Redondeamos únicamente la parte superior e inferior derecha */
+        border-top-right-radius: 24px !important;
+        border-bottom-right-radius: 24px !important;
+        
+        /* Sombra flotante más marcada */
+        box-shadow: 10px 0 25px rgba(0, 0, 0, 0.35) !important;
+        padding-bottom: 20px !important; /* Espacio extra al final del scroll */
     }
 
-    /* Hacer visible todo el contenido cuando se despliega el menú */
-    aside:hover nav,
-    aside:active nav,
-    aside.active-mobile nav,
-    aside:hover center,
-    aside:active center,
-    aside.active-mobile center,
-    aside:hover .aside-logo,
-    aside:active .aside-logo,
-    aside.active-mobile .aside-logo {
+    /* Ocultar la hamburguesa cuando abre */
+    aside.active-mobile::before,
+    aside:hover::before {
+        opacity: 0 !important;
+    }
+
+    /* Mostrar contenido ordenado al desplegar */
+    aside.active-mobile > *,
+    aside:hover > * {
         opacity: 1 !important;
         pointer-events: auto !important;
     }
 
-    /* 3. FIX DE TEXTOS Y ELIMINACIÓN DE VIÑETAS/PUNTOS */
-    aside nav ul, 
-    aside nav li {
-        list-style: none !important;
-        list-style-type: none !important;
+    /* Ajustes del Logo y Títulos */
+    aside .aside-logo,
+    aside center,
+    aside header {
+        padding-top: 10px !important;
+        margin-bottom: 10px !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* 3. Navegación fluida y sin empalmados */
+    aside nav {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
         padding: 0 !important;
         margin: 0 !important;
     }
 
+    aside nav ul {
+        list-style: none !important;
+        list-style-type: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important; /* Espaciado uniforme entre opciones */
+    }
+    aside nav li,
     aside nav a, 
     aside nav button, 
+    aside .logout-btn, /* Por si 'Cerrar sesión' tiene su propia clase */
     aside nav ul li {
+        margin: 0 !important; /* Elimina márgenes individuales que rompan la simetría */
+        position: static !important; /* Quita posiciones absolutas que enciman los botones */
         display: flex !important;
         align-items: center !important;
         justify-content: flex-start !important;
-        color: #ffffff !important; /* Texto blanco legible */
-        font-size: 14px !important;
-        white-space: nowrap !important; /* Evita que el texto se rompa en varias líneas */
-        padding: 10px 15px !important;
+        color: #ffffff !important;
+        font-size: 13px !important; /* Tamaño responsivo para no saturar */
+        white-space: nowrap !important;
+        padding: 6px 15px !important; /* Padding ajustado para que quepan todos los elementos */
+        box-sizing: border-box !important;
+        line-height: 1.2 !important;
     }
-
-    /* Ajuste del contenido para no quedar encimado */
+/* Si "Cerrar sesión" o "Reportes" están fuera de la lista principal */
+    aside nav > a,
+    aside nav > button {
+        margin-top: 6px !important; /* Mismo espaciado que el 'gap' */
+    }
+    /* Ajuste para el contenido principal */
     main {
         width: calc(100% - 50px) !important;
         margin-left: 50px !important;
         padding: 12px !important;
         box-sizing: border-box !important;
+    }
+}
+/*Cambios para las card en el de reportes */
+/* ==========================================
+   CARDS Y TABLAS RESPONSIVAS (SOLO CSS)
+   ========================================== */
+@media (max-width: 768px) {
+
+    /* 1. Grid de reportes a 1 sola columna responsiva */
+    .report-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 16px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 2. Estilo de Tarjetas (Cards) adaptables */
+    .report-grid section,
+    .report-daily,
+    .box {
+        background: #ffffff !important;
+        border-radius: 16px !important;
+        padding: 16px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06) !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important; /* Mantiene el contenido dentro de la tarjeta */
+    }
+
+    /* 3. Ajuste de títulos para que no rompan el layout */
+    .report-grid h3 {
+        font-size: 15px !important;
+        color: #1e293b !important;
+        margin-top: 0 !important;
+        margin-bottom: 12px !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+    }
+
+    /* 4. Tablas con scroll horizontal interno suave */
+    .report-grid table {
+        display: block !important;
+        width: 100% !important;
+        overflow-x: auto !important; /* Deslizamiento suave de la tabla si no cabe */
+        white-space: nowrap !important;
+        -webkit-overflow-scrolling: touch !important;
+        border-collapse: collapse !important;
+    }
+
+    /* 5. Celdas más limpias y legibles en móviles */
+    .report-grid th, 
+    .report-grid td {
+        padding: 10px 12px !important;
+        font-size: 12px !important;
+        text-align: left !important;
+    }
+
+    /* Ocultar la parte redundante del ISO Timestamp si es muy largo (Opcional) */
+    .report-grid td {
+        max-width: 130px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
 }
