@@ -882,18 +882,6 @@ async function editarReserva(r) {
   f.adultos.value = r.adultos;
   f.menores.value = r.menores;
   await buscarDisponibles();
-  const nums = String(r.habitaciones_detalle || '')
-    .split(',')
-    .map((x) => x.split('|')[0]);
-  const all = await api('/habitaciones');
-  all
-    .filter((h) => nums.includes(String(h.numero)))
-    .forEach((h) => {
-      const cb = document.querySelector(
-        `input[name=habitacionIds][value="${h.id}"]`,
-      );
-      if (cb) cb.checked = true;
-    });
 }
 
 function limpiezaCard(row) {
@@ -917,6 +905,7 @@ async function limpieza() {
 }
 const bloqueosReserva = new Set();
 async function cambiarBloqueo(input) {
+  if (input.dataset.asignadaActualmente === 'true') return;
   try {
     await api(`/reservaciones/bloqueo/${input.value}`, {
       method: input.checked ? 'POST' : 'DELETE',
@@ -947,14 +936,18 @@ async function buscarDisponibles() {
   if (!f.fechaInicio.value || !f.fechaFin.value)
     return alert('Selecciona las fechas');
   await liberarBloqueosReserva();
+  const reservacionId = Number(f.id.value) || null;
+  const reservacionQuery = reservacionId
+    ? `&reservacionId=${encodeURIComponent(reservacionId)}`
+    : '';
   const rooms = await api(
-    `/reservaciones/disponibles?inicio=${encodeURIComponent(f.fechaInicio.value)}&fin=${encodeURIComponent(f.fechaFin.value)}`,
+    `/reservaciones/disponibles?inicio=${encodeURIComponent(f.fechaInicio.value)}&fin=${encodeURIComponent(f.fechaFin.value)}${reservacionQuery}`,
   );
   availableRooms.innerHTML = rooms.length
     ? rooms
         .map(
           (h) =>
-            `<label class="available-room"><input type=checkbox name=habitacionIds value=${h.id} onchange="cambiarBloqueo(this)"><div class=room-photo>${h.fotoUrl ? `<img src="${esc(h.fotoUrl)}">` : '<span>Sin foto</span>'}</div><strong>Habitación ${esc(h.numero)}</strong><span>${esc(h.tipo?.nombre || 'Sin tipo')} · Piso ${esc(h.piso ?? '-')}</span></label>`,
+            `<label class="available-room"><input type=checkbox name=habitacionIds value=${h.id} ${h.asignadaActualmente ? 'checked data-asignada-actualmente=true' : ''} onchange="cambiarBloqueo(this)"><div class=room-photo>${h.fotoUrl ? `<img src="${esc(h.fotoUrl)}">` : '<span>Sin foto</span>'}</div><strong>Habitación ${esc(h.numero)}</strong><span>${esc(h.tipo?.nombre || 'Sin tipo')} · Piso ${esc(h.piso ?? '-')}${h.asignadaActualmente ? ' · Asignada actualmente' : ''}</span></label>`,
         )
         .join('')
     : '<p>No hay habitaciones disponibles para esas fechas.</p>';

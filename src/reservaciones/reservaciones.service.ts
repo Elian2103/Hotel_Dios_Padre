@@ -53,9 +53,15 @@ export class ReservacionesService {
     return consulta.getRawMany();
   }
 
-  async disponibles(inicio: string, fin: string) {
+  async disponibles(inicio: string, fin: string, reservacionId?: number) {
     if (!inicio || !fin) {
       throw new BadRequestException('Selecciona fecha de entrada y salida');
+    }
+    if (
+      reservacionId !== undefined &&
+      (!Number.isInteger(reservacionId) || reservacionId <= 0)
+    ) {
+      throw new BadRequestException('Reservación inválida');
     }
     this.validarFechaActual(inicio);
     if (new Date(fin) <= new Date(inicio)) {
@@ -64,7 +70,14 @@ export class ReservacionesService {
       );
     }
 
-    return this.habitaciones
+    const habitacionesActuales = reservacionId
+      ? await this.enlaces.findBy({ reservacionId })
+      : [];
+    const habitacionesActualesIds = new Set(
+      habitacionesActuales.map((enlace) => enlace.habitacionId),
+    );
+
+    const habitaciones = await this.habitaciones
       .createQueryBuilder('h')
       .leftJoinAndSelect('h.estado', 'estado')
       .leftJoinAndSelect('h.tipo', 'tipo')
@@ -77,14 +90,27 @@ export class ReservacionesService {
           WHERE r.estado IN ('En proceso','Confirmada')
           AND r.fecha_inicio < :fin
           AND r.fecha_fin > :inicio
+          AND (:reservacionId IS NULL OR r.id <> :reservacionId)
         )`,
-        { inicio, fin },
+        { inicio, fin, reservacionId: reservacionId ?? null },
       )
       .andWhere(
-        "estado.nombre NOT IN ('Fuera de servicio','Ocupada','Pendiente de limpieza','Sucia','En proceso')",
+        `(estado.nombre NOT IN ('Fuera de servicio','Ocupada','Pendiente de limpieza','Sucia','En proceso')
+          OR (:reservacionId IS NOT NULL AND h.id IN (
+            SELECT actual.habitacion_id
+            FROM reservacion_habitaciones actual
+            WHERE actual.reservacion_id = :reservacionId
+          )))`,
+        { reservacionId: reservacionId ?? null },
       )
       .orderBy('h.numero', 'ASC')
       .getMany();
+
+    return habitaciones.map((habitacion) =>
+      Object.assign(habitacion, {
+        asignadaActualmente: habitacionesActualesIds.has(habitacion.id),
+      }),
+    );
   }
 
   async create(data: any, usuarioId: number) {
@@ -195,11 +221,14 @@ export class ReservacionesService {
       ]),
     );
 
-    const disponibles = await this.disponibles(data.fechaInicio, data.fechaFin);
-    const permitidas = new Set([
-      ...disponibles.map((habitacion) => habitacion.id),
-      ...actualesIds,
-    ]);
+    const disponibles = await this.disponibles(
+      data.fechaInicio,
+      data.fechaFin,
+      id,
+    );
+    const permitidas = new Set(
+      disponibles.map((habitacion) => habitacion.id),
+    );
     if (
       nuevosIds.some((habitacionId: number) => !permitidas.has(habitacionId))
     ) {
