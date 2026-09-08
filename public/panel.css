@@ -1275,7 +1275,7 @@ button {
   padding: 24px;
   border-radius: 19px;
   color: #fff;
-  background: linear-gradient(135deg, #172554, #2563eb);
+  background: linear-gradient(135deg, #1877c9, #1877c9 55%, #1877c9);
 }
 .ticket-header h1 {
   margin: 4px 0;
