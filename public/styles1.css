@@ -29,7 +29,7 @@ body {
 /* Columna Izquierda: Imagen del Balneario al 50% */
 .login-hero-image {
     flex: 1; /* Ocupa el 50% del ancho */
-    background: url('8.png') center/cover no-repeat;
+    background: url('hotel-dios-padre-.png') center/cover no-repeat;
     min-height: 100vh;
 }
 
